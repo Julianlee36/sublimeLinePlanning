@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import type { Player } from '../types/player';
 
@@ -21,6 +21,10 @@ const CreateTallyGame = () => {
   const [defendsB, setDefendsB] = useState<number>(0);
   const [turnoversA, setTurnoversA] = useState<number>(0);
   const [turnoversB, setTurnoversB] = useState<number>(0);
+  const [eventModal, setEventModal] = useState<null | { type: 'score' | 'defend' | 'turnover', step: number, data: any }> (null);
+  const [events, setEvents] = useState<any[]>([]); // {type, team, player(s), time, extra}
+  const [undoStack, setUndoStack] = useState<any[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Timer effect
   useEffect(() => {
@@ -84,6 +88,72 @@ const CreateTallyGame = () => {
         setPlayers([...players, player]);
         setTeamA(teamA.filter(p => p.id !== player.id));
         setTeamB(teamB.filter(p => p.id !== player.id));
+    }
+  };
+
+  // Autocomplete filter
+  const [playerQuery, setPlayerQuery] = useState('');
+  const allPlayers = [...teamA, ...teamB];
+  const filteredPlayers = allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()));
+
+  // Modal close helper
+  const closeModal = () => {
+    setEventModal(null);
+    setPlayerQuery('');
+  };
+
+  // Event handlers
+  const handleEventButton = (type: 'score' | 'defend' | 'turnover') => {
+    setEventModal({ type, step: 0, data: {} });
+  };
+
+  // Undo
+  const handleUndo = () => {
+    if (events.length > 0) {
+      const last = events[events.length - 1];
+      setUndoStack([...undoStack, last]);
+      setEvents(events.slice(0, -1));
+      // Optionally update tallies here
+    }
+  };
+
+  // End game
+  const handleEndGame = () => {
+    setTimerActive(false);
+    // Optionally: show summary, save, etc.
+  };
+
+  // Handle modal step logic
+  const handleModalNext = (value: any) => {
+    if (!eventModal) return;
+    const { type, step, data } = eventModal;
+    if (type === 'score') {
+      if (step === 0) {
+        // Pick assister
+        setEventModal({ type, step: 1, data: { ...data, assister: value } });
+      } else if (step === 1) {
+        // Pick scorer
+        setEvents([...events, { type: 'score', assister: data.assister, scorer: value, time: timer }]);
+        setScoreA(teamA.some(p => p.id === value.id) ? scoreA + 1 : scoreA);
+        setScoreB(teamB.some(p => p.id === value.id) ? scoreB + 1 : scoreB);
+        closeModal();
+      }
+    } else if (type === 'defend') {
+      setEvents([...events, { type: 'defend', player: value, time: timer }]);
+      setDefendsA(teamA.some(p => p.id === value.id) ? defendsA + 1 : defendsA);
+      setDefendsB(teamB.some(p => p.id === value.id) ? defendsB + 1 : defendsB);
+      closeModal();
+    } else if (type === 'turnover') {
+      if (step === 0) {
+        // Pick player
+        setEventModal({ type, step: 1, data: { ...data, player: value } });
+      } else if (step === 1) {
+        // Pick type or skip
+        setEvents([...events, { type: 'turnover', player: data.player, turnoverType: value, time: timer }]);
+        setTurnoversA(teamA.some(p => p.id === data.player.id) ? turnoversA + 1 : turnoversA);
+        setTurnoversB(teamB.some(p => p.id === data.player.id) ? turnoversB + 1 : turnoversB);
+        closeModal();
+      }
     }
   };
 
@@ -246,9 +316,9 @@ const CreateTallyGame = () => {
 
       {/* Game in progress step */}
       {teamCreationMethod === 'scratch' && step === 'game' && (
-        <div className="mt-8 max-w-2xl mx-auto bg-gray-50 p-6 rounded-lg shadow flex flex-col gap-6">
-          {/* Timer */}
-          <div className="flex items-center justify-between">
+        <div className="mt-2 max-w-md mx-auto flex flex-col gap-4">
+          {/* Timer and End Game */}
+          <div className="flex items-center justify-between mb-2">
             <div className="text-lg font-semibold">Timer:</div>
             <div className="text-2xl font-mono">
               {Math.floor(timer / 60).toString().padStart(2, '0')}:{(timer % 60).toString().padStart(2, '0')}
@@ -258,34 +328,143 @@ const CreateTallyGame = () => {
             </div>
             <button
               onClick={() => setTimerActive(!timerActive)}
-              className="ml-4 px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-sm"
+              className="ml-2 px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-sm"
             >
               {timerActive ? 'Pause' : 'Resume'}
             </button>
+            <button
+              onClick={handleEndGame}
+              className="ml-2 px-3 py-1 rounded bg-red-500 text-white text-sm"
+            >
+              End Game
+            </button>
           </div>
           {/* Scoreboard */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-            <div className="flex-1 bg-white p-4 rounded-lg shadow text-center">
-              <div className="font-bold text-lg mb-2">Team A</div>
-              <div className="text-3xl font-mono mb-2">{scoreA}</div>
-              <div className="flex justify-center gap-2 mb-2">
-                <button onClick={() => setScoreA(s => (scoreCap === 0 || s < scoreCap) ? s + 1 : s)} className="px-3 py-1 bg-green-500 text-white rounded">Score</button>
-                <button onClick={() => setDefendsA(d => d + 1)} className="px-3 py-1 bg-blue-500 text-white rounded">Defend</button>
-                <button onClick={() => setTurnoversA(t => t + 1)} className="px-3 py-1 bg-red-500 text-white rounded">Turnover</button>
-              </div>
-              <div className="text-sm text-gray-600">Defends: {defendsA} | Turnovers: {turnoversA}</div>
+          <div className="flex flex-row gap-2 justify-between items-center">
+            <div className="flex-1 bg-white p-2 rounded-lg shadow text-center">
+              <div className="font-bold text-md mb-1">Team A</div>
+              <div className="text-2xl font-mono mb-1">{scoreA}</div>
+              <div className="text-xs text-gray-600">Defends: {defendsA} | Turnovers: {turnoversA}</div>
             </div>
-            <div className="flex-1 bg-white p-4 rounded-lg shadow text-center">
-              <div className="font-bold text-lg mb-2">Team B</div>
-              <div className="text-3xl font-mono mb-2">{scoreB}</div>
-              <div className="flex justify-center gap-2 mb-2">
-                <button onClick={() => setScoreB(s => (scoreCap === 0 || s < scoreCap) ? s + 1 : s)} className="px-3 py-1 bg-green-500 text-white rounded">Score</button>
-                <button onClick={() => setDefendsB(d => d + 1)} className="px-3 py-1 bg-blue-500 text-white rounded">Defend</button>
-                <button onClick={() => setTurnoversB(t => t + 1)} className="px-3 py-1 bg-red-500 text-white rounded">Turnover</button>
-              </div>
-              <div className="text-sm text-gray-600">Defends: {defendsB} | Turnovers: {turnoversB}</div>
+            <div className="flex-1 bg-white p-2 rounded-lg shadow text-center">
+              <div className="font-bold text-md mb-1">Team B</div>
+              <div className="text-2xl font-mono mb-1">{scoreB}</div>
+              <div className="text-xs text-gray-600">Defends: {defendsB} | Turnovers: {turnoversB}</div>
             </div>
           </div>
+          {/* Event buttons */}
+          <div className="flex flex-wrap gap-3 justify-center mt-2">
+            <button onClick={() => handleEventButton('score')} className="px-6 py-3 rounded bg-green-600 text-white font-bold text-lg">Score</button>
+            <button onClick={() => handleEventButton('defend')} className="px-6 py-3 rounded bg-blue-600 text-white font-bold text-lg">Defend</button>
+            <button onClick={() => handleEventButton('turnover')} className="px-6 py-3 rounded bg-red-600 text-white font-bold text-lg">Turnover</button>
+            <button onClick={handleUndo} className="px-6 py-3 rounded bg-gray-400 text-white font-bold text-lg">Undo</button>
+          </div>
+
+          {/* Event modal */}
+          {eventModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs mx-auto">
+                {/* Score event flow */}
+                {eventModal.type === 'score' && eventModal.step === 0 && (
+                  <>
+                    <div className="mb-2 font-semibold">Select Assister</div>
+                    <input
+                      ref={inputRef}
+                      autoFocus
+                      className="w-full p-2 border rounded mb-2"
+                      placeholder="Type to search..."
+                      value={playerQuery}
+                      onChange={e => setPlayerQuery(e.target.value)}
+                    />
+                    <div className="max-h-40 overflow-y-auto">
+                      {filteredPlayers.map(player => (
+                        <div key={player.id} className="p-2 hover:bg-gray-200 cursor-pointer rounded" onClick={() => handleModalNext(player)}>
+                          {player.name}
+                        </div>
+                      ))}
+                      {filteredPlayers.length === 0 && <div className="text-gray-400 p-2">No players found</div>}
+                    </div>
+                  </>
+                )}
+                {eventModal.type === 'score' && eventModal.step === 1 && (
+                  <>
+                    <div className="mb-2 font-semibold">Select Goal Scorer</div>
+                    <input
+                      ref={inputRef}
+                      autoFocus
+                      className="w-full p-2 border rounded mb-2"
+                      placeholder="Type to search..."
+                      value={playerQuery}
+                      onChange={e => setPlayerQuery(e.target.value)}
+                    />
+                    <div className="max-h-40 overflow-y-auto">
+                      {filteredPlayers.map(player => (
+                        <div key={player.id} className="p-2 hover:bg-gray-200 cursor-pointer rounded" onClick={() => handleModalNext(player)}>
+                          {player.name}
+                        </div>
+                      ))}
+                      {filteredPlayers.length === 0 && <div className="text-gray-400 p-2">No players found</div>}
+                    </div>
+                  </>
+                )}
+                {/* Defend event flow */}
+                {eventModal.type === 'defend' && (
+                  <>
+                    <div className="mb-2 font-semibold">Select Defender</div>
+                    <input
+                      ref={inputRef}
+                      autoFocus
+                      className="w-full p-2 border rounded mb-2"
+                      placeholder="Type to search..."
+                      value={playerQuery}
+                      onChange={e => setPlayerQuery(e.target.value)}
+                    />
+                    <div className="max-h-40 overflow-y-auto">
+                      {filteredPlayers.map(player => (
+                        <div key={player.id} className="p-2 hover:bg-gray-200 cursor-pointer rounded" onClick={() => handleModalNext(player)}>
+                          {player.name}
+                        </div>
+                      ))}
+                      {filteredPlayers.length === 0 && <div className="text-gray-400 p-2">No players found</div>}
+                    </div>
+                  </>
+                )}
+                {/* Turnover event flow */}
+                {eventModal.type === 'turnover' && eventModal.step === 0 && (
+                  <>
+                    <div className="mb-2 font-semibold">Select Player (Turnover)</div>
+                    <input
+                      ref={inputRef}
+                      autoFocus
+                      className="w-full p-2 border rounded mb-2"
+                      placeholder="Type to search..."
+                      value={playerQuery}
+                      onChange={e => setPlayerQuery(e.target.value)}
+                    />
+                    <div className="max-h-40 overflow-y-auto">
+                      {filteredPlayers.map(player => (
+                        <div key={player.id} className="p-2 hover:bg-gray-200 cursor-pointer rounded" onClick={() => handleModalNext(player)}>
+                          {player.name}
+                        </div>
+                      ))}
+                      {filteredPlayers.length === 0 && <div className="text-gray-400 p-2">No players found</div>}
+                    </div>
+                  </>
+                )}
+                {eventModal.type === 'turnover' && eventModal.step === 1 && (
+                  <>
+                    <div className="mb-2 font-semibold">Turnover Type</div>
+                    <div className="flex flex-col gap-2">
+                      <button className="p-2 bg-blue-500 text-white rounded" onClick={() => handleModalNext('throwing')}>Throwing</button>
+                      <button className="p-2 bg-green-500 text-white rounded" onClick={() => handleModalNext('catching')}>Catching</button>
+                      <button className="p-2 bg-gray-300 text-gray-800 rounded" onClick={() => handleModalNext('skip')}>Skip</button>
+                    </div>
+                  </>
+                )}
+                <button className="mt-4 w-full p-2 rounded bg-gray-200 hover:bg-gray-300" onClick={closeModal}>Cancel</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
