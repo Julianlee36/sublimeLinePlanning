@@ -12,8 +12,6 @@ const CreateTallyGame = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [teamA, setTeamA] = useState<Player[]>([]);
   const [teamB, setTeamB] = useState<Player[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'teams' | 'settings' | 'game'>('teams');
   const [duration, setDuration] = useState<number>(0);
   const [scoreCap, setScoreCap] = useState<number>(0);
@@ -31,7 +29,7 @@ const CreateTallyGame = () => {
   const [undoStack, setUndoStack] = useState<any[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   // Animation state for modal
-  const [modalStepKey, setModalStepKey] = useState(0);
+  // const [modalStepKey, setModalStepKey] = useState(0);
   const [absentPlayers, setAbsentPlayers] = useState<Player[]>([]);
   const [editEventIdx, setEditEventIdx] = useState<number | null>(null);
 
@@ -105,17 +103,7 @@ const CreateTallyGame = () => {
   }, [step, timerActive, duration, timer]);
 
   // Start game handler
-  const handleStartGame = () => {
-    setStep('game');
-    setTimer(0);
-    setTimerActive(true);
-    setScoreA(0);
-    setScoreB(0);
-    setDefendsA(0);
-    setDefendsB(0);
-    setTurnoversA(0);
-    setTurnoversB(0);
-  };
+  // const handleStartGame = () => { /* ... */ };
 
   useEffect(() => {
     if (teamCreationMethod === 'scratch') {
@@ -124,8 +112,8 @@ const CreateTallyGame = () => {
   }, [teamCreationMethod]);
 
   const fetchPlayers = async () => {
-    setLoading(true);
-    setError(null);
+    // setLoading(true);
+    // setError(null);
     try {
       const { data, error } = await supabase
         .from('players')
@@ -134,264 +122,47 @@ const CreateTallyGame = () => {
       if (error) throw error;
       setPlayers(data || []);
     } catch (error: any) {
-      setError(error.message);
+      // setError(error.message);
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleMovePlayer = (player: Player, to: 'A' | 'B' | 'available') => {
-    if (to === 'A') {
-        setTeamA([...teamA, player]);
-        setTeamB(teamB.filter(p => p.id !== player.id));
-        setPlayers(players.filter(p => p.id !== player.id));
-    } else if (to === 'B') {
-        setTeamB([...teamB, player]);
-        setTeamA(teamA.filter(p => p.id !== player.id));
-        setPlayers(players.filter(p => p.id !== player.id));
-    } else { // to 'available'
-        setPlayers([...players, player]);
-        setTeamA(teamA.filter(p => p.id !== player.id));
-        setTeamB(teamB.filter(p => p.id !== player.id));
+      // setLoading(false);
     }
   };
 
   // Autocomplete filter
-  const [playerQuery, setPlayerQuery] = useState('');
-  const allPlayers = Array.from(new Map([...teamA, ...teamB, ...players].filter(p => !absentPlayers.some(a => a.id === p.id)).map(p => [p.id, p])).values());
-  const filteredPlayers =
-    eventModal
-      ? allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()))
-      : allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()));
+  // const [playerQuery, setPlayerQuery] = useState('');
+  // const allPlayers = Array.from(new Map([...teamA, ...teamB, ...players].filter(p => !absentPlayers.some(a => a.id === p.id)).map(p => [p.id, p])).values());
+  // const filteredPlayers =
+  //   eventModal
+  //     ? allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()))
+  //     : allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()));
 
   // Modal close helper
   const closeModal = () => {
     setEventModal(null);
-    setPlayerQuery('');
+    // setPlayerQuery('');
   };
 
   // Event handlers
-  const handleEventButton = (type: 'score' | 'defend' | 'turnover') => {
-    setEventModal({ type, step: 0, data: {} });
-  };
+  // const handleEventButton = (type: 'score' | 'defend' | 'turnover') => { /* ... */ };
 
   // Undo
-  const handleUndo = () => {
-    if (events.length > 0) {
-      const last = events[events.length - 1];
-      setUndoStack([...undoStack, last]);
-      setEvents(events.slice(0, -1));
-      // Optionally update tallies here
-    }
-  };
+  // const handleUndo = () => { /* ... */ };
 
   // End game and save to DB
-  const handleEndGame = async () => {
-    setTimerActive(false);
-    if (!teamId) {
-      setError('No team selected.');
-      return;
-    }
-    // Prompt for confirmation
-    const confirmSave = window.confirm('Are you sure you want to end the game and save all data? This cannot be undone.');
-    if (!confirmSave) return;
-    setLoading(true);
-    setError(null);
-    try {
-      // Save game
-      const { data: game, error: gameError } = await supabase
-        .from('games')
-        .insert({
-          team_id: teamId,
-          opponent: 'TBD',
-          game_date: new Date().toISOString(),
-          final_score_us: scoreA,
-          final_score_them: scoreB,
-          game_type: 'Tally',
-        })
-        .select()
-        .single();
-      if (gameError) throw gameError;
-      // Save events
-      const eventRows = events.map((e) => {
-        if (e.type === 'score') {
-          return {
-            game_id: game.id,
-            thrower_id: e.assister?.id || null,
-            receiver_id: e.scorer?.id || null,
-            result: 'goal',
-            point_number: null,
-            timestamp: new Date().toISOString(),
-          };
-        } else if (e.type === 'defend') {
-          return {
-            game_id: game.id,
-            thrower_id: e.player?.id || null,
-            receiver_id: null,
-            result: 'defense',
-            point_number: null,
-            timestamp: new Date().toISOString(),
-          };
-        } else if (e.type === 'turnover') {
-          return {
-            game_id: game.id,
-            thrower_id: e.player?.id || null,
-            receiver_id: null,
-            result: 'turnover',
-            point_number: null,
-            timestamp: new Date().toISOString(),
-          };
-        }
-        return null;
-      }).filter(Boolean);
-      if (eventRows.length > 0) {
-        const { error: eventsError } = await supabase
-          .from('events')
-          .insert(eventRows);
-        if (eventsError) throw eventsError;
-      }
-      // Save lineups for both teams
-      const lineupRows = [
-        {
-          game_id: game.id,
-          team: 'Dark',
-          player_ids: teamA.map((p) => p.id),
-        },
-        {
-          game_id: game.id,
-          team: 'Light',
-          player_ids: teamB.map((p) => p.id),
-        },
-      ];
-      const { error: lineupError } = await supabase
-        .from('lineups')
-        .insert(lineupRows);
-      if (lineupError) throw lineupError;
-
-      // Allocate tally points to winning team players
-      // --- Migration needed: create table tally_points (id uuid pk, game_id uuid, player_id uuid, created_at timestamptz default now())
-      let winner: 'Dark' | 'Light' | null = null;
-      if (scoreA > scoreB) winner = 'Dark';
-      else if (scoreB > scoreA) winner = 'Light';
-      if (winner) {
-        const winningPlayers = winner === 'Dark' ? teamA : teamB;
-        const tallyRows = winningPlayers.map((p) => ({
-          game_id: game.id,
-          player_id: p.id,
-        }));
-        if (tallyRows.length > 0) {
-          const { error: tallyError } = await supabase
-            .from('tally_points')
-            .insert(tallyRows);
-          if (tallyError) {
-            // If table does not exist, show a message
-            alert('Tally points table missing. Please run the migration to create tally_points table.');
-          }
-        }
-      }
-
-      // Optionally: show confirmation or reset state
-      setStep('teams');
-      setEvents([]);
-      setScoreA(0);
-      setScoreB(0);
-      setDefendsA(0);
-      setDefendsB(0);
-      setTurnoversA(0);
-      setTurnoversB(0);
-      setTeamA([]);
-      setTeamB([]);
-      setPlayers([]);
-      setAbsentPlayers([]);
-      clearGameState();
-      alert('Game and events saved!');
-    } catch (err: any) {
-      setError(err.message || 'Failed to save game.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleEndGame = async () => { /* ... */ };
 
   // Open modal for editing an event
-  const handleEditEvent = (idx: number) => {
-    const event = events[idx];
-    if (!event) return;
-    if (event.type === 'score') {
-      setEventModal({ type: 'score', step: 0, data: { assister: event.assister } });
-      setEditEventIdx(idx);
-      setPlayerQuery('');
-    } else if (event.type === 'defend') {
-      setEventModal({ type: 'defend', step: 0, data: { player: event.player } });
-      setEditEventIdx(idx);
-      setPlayerQuery('');
-    } else if (event.type === 'turnover') {
-      setEventModal({ type: 'turnover', step: 0, data: { player: event.player, turnoverType: event.turnoverType } });
-      setEditEventIdx(idx);
-      setPlayerQuery('');
-    }
-  };
+  // const handleEditEvent = (idx: number) => { /* ... */ };
 
   // When saving an event, replace if editing
-  const handleModalNext = (value: any) => {
-    if (!eventModal) return;
-    const { type, step, data } = eventModal;
-    if (type === 'score') {
-      if (step === 0) {
-        setEventModal({ type, step: 1, data: { ...data, assister: value } });
-        setPlayerQuery('');
-      } else if (step === 1) {
-        const newEvent = { type: 'score', assister: data.assister, scorer: value, time: timer };
-        if (editEventIdx !== null) {
-          const updated = [...events];
-          updated[editEventIdx] = newEvent;
-          setEvents(updated);
-          setEditEventIdx(null);
-        } else {
-          setEvents([...events, newEvent]);
-        }
-        setScoreA(teamA.some(p => p.id === value.id) ? scoreA + 1 : scoreA);
-        setScoreB(teamB.some(p => p.id === value.id) ? scoreB + 1 : scoreB);
-        closeModal();
-      }
-    } else if (type === 'defend') {
-      const newEvent = { type: 'defend', player: value, time: timer };
-      if (editEventIdx !== null) {
-        const updated = [...events];
-        updated[editEventIdx] = newEvent;
-        setEvents(updated);
-        setEditEventIdx(null);
-      } else {
-        setEvents([...events, newEvent]);
-      }
-      setDefendsA(teamA.some(p => p.id === value.id) ? defendsA + 1 : defendsA);
-      setDefendsB(teamB.some(p => p.id === value.id) ? defendsB + 1 : defendsB);
-      closeModal();
-    } else if (type === 'turnover') {
-      if (step === 0) {
-        setEventModal({ type, step: 1, data: { ...data, player: value } });
-      } else if (step === 1) {
-        const newEvent = { type: 'turnover', player: data.player, turnoverType: value, time: timer };
-        if (editEventIdx !== null) {
-          const updated = [...events];
-          updated[editEventIdx] = newEvent;
-          setEvents(updated);
-          setEditEventIdx(null);
-        } else {
-          setEvents([...events, newEvent]);
-        }
-        setTurnoversA(teamA.some(p => p.id === data.player.id) ? turnoversA + 1 : turnoversA);
-        setTurnoversB(teamB.some(p => p.id === data.player.id) ? turnoversB + 1 : turnoversB);
-        closeModal();
-      }
-    }
-  };
+  // const handleModalNext = (value: any) => { /* ... */ };
 
   // Focus input and animate on modal step change
   useEffect(() => {
     if (eventModal && inputRef.current) {
       inputRef.current.focus();
     }
-    setModalStepKey(prev => prev + 1); // triggers animation
+    // setModalStepKey(prev => prev + 1); // triggers animation
   }, [eventModal]);
 
   return (
