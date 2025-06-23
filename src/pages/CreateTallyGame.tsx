@@ -85,42 +85,42 @@ const CreateTallyGame = () => {
           <h3 className="text-lg font-semibold">Create Teams from Scratch</h3>
           {loading && <p>Loading players...</p>}
           {error && <p className="text-red-500">{error}</p>}
-          <div className="grid grid-cols-3 gap-4 mt-4">
-            <div>
-                <h4 className="font-semibold">Available Players</h4>
-                <ul className="border p-2 rounded-md min-h-[200px]">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-4">
+            <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-center mb-4">Available Players</h4>
+                <div className="space-y-3">
                     {players.map(player => (
-                        <li key={player.id} className="flex justify-between items-center">
-                            {player.name}
-                            <div>
-                                <button onClick={() => handleMovePlayer(player, 'A')} className="text-xs bg-blue-500 text-white px-1 rounded">A</button>
-                                <button onClick={() => handleMovePlayer(player, 'B')} className="text-xs bg-red-500 text-white px-1 rounded ml-1">B</button>
+                        <div key={player.id} className="bg-white p-3 rounded-lg shadow flex justify-between items-center">
+                            <span className="font-medium">{player.name}</span>
+                            <div className="flex gap-2">
+                                <button onClick={() => handleMovePlayer(player, 'A')} className="w-8 h-8 font-bold bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center">A</button>
+                                <button onClick={() => handleMovePlayer(player, 'B')} className="w-8 h-8 font-bold bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center justify-center">B</button>
                             </div>
-                        </li>
+                        </div>
                     ))}
-                </ul>
+                </div>
             </div>
-            <div>
-                <h4 className="font-semibold">Team A</h4>
-                <ul className="border p-2 rounded-md min-h-[200px]">
+            <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-center mb-4">Team A</h4>
+                <div className="space-y-3">
                     {teamA.map(player => (
-                        <li key={player.id} className="flex justify-between items-center">
-                            {player.name}
-                            <button onClick={() => handleMovePlayer(player, 'available')} className="text-xs bg-gray-500 text-white px-1 rounded">X</button>
-                        </li>
+                        <div key={player.id} className="bg-white p-3 rounded-lg shadow flex justify-between items-center">
+                            <span className="font-medium">{player.name}</span>
+                            <button onClick={() => handleMovePlayer(player, 'available')} className="w-8 h-8 font-bold bg-gray-400 text-white rounded-md hover:bg-gray-500 flex items-center justify-center">X</button>
+                        </div>
                     ))}
-                </ul>
+                </div>
             </div>
-            <div>
-                <h4 className="font-semibold">Team B</h4>
-                <ul className="border p-2 rounded-md min-h-[200px]">
+            <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-center mb-4">Team B</h4>
+                <div className="space-y-3">
                     {teamB.map(player => (
-                        <li key={player.id} className="flex justify-between items-center">
-                            {player.name}
-                            <button onClick={() => handleMovePlayer(player, 'available')} className="text-xs bg-gray-500 text-white px-1 rounded">X</button>
-                        </li>
+                        <div key={player.id} className="bg-white p-3 rounded-lg shadow flex justify-between items-center">
+                            <span className="font-medium">{player.name}</span>
+                            <button onClick={() => handleMovePlayer(player, 'available')} className="w-8 h-8 font-bold bg-gray-400 text-white rounded-md hover:bg-gray-500 flex items-center justify-center">X</button>
+                        </div>
                     ))}
-                </ul>
+                </div>
             </div>
           </div>
         </div>
