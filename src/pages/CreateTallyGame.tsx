@@ -97,10 +97,13 @@ const CreateTallyGame = () => {
   // Autocomplete filter
   const [playerQuery, setPlayerQuery] = useState('');
   const allPlayers = Array.from(new Map([...teamA, ...teamB, ...players].filter(p => !absentPlayers.some(a => a.id === p.id)).map(p => [p.id, p])).values());
-  const filteredPlayers = [
-    { id: '0', name: 'None' },
-    ...allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()))
-  ];
+  const filteredPlayers =
+    eventModal
+      ? [
+          { id: '0', name: 'None' },
+          ...allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase())),
+        ]
+      : allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()));
 
   // Modal close helper
   const closeModal = () => {
@@ -369,7 +372,30 @@ const CreateTallyGame = () => {
             <button onClick={() => handleEventButton('turnover')} className="px-6 py-3 rounded bg-red-600 text-white font-bold text-lg">Turnover</button>
             <button onClick={handleUndo} className="px-6 py-3 rounded bg-gray-400 text-white font-bold text-lg">Undo</button>
           </div>
-
+          {/* Event log */}
+          <div className="mt-2 bg-gray-100 rounded p-2 max-h-32 overflow-y-auto text-sm">
+            <div className="font-semibold mb-1">Event Log</div>
+            {events.length === 0 && <div className="text-gray-400">No events yet.</div>}
+            {events.slice().reverse().map((event, idx) => (
+              <div key={idx} className="mb-1">
+                {event.type === 'score' && (
+                  <span>
+                    <span className="font-bold text-green-700">Score</span>: {event.assister?.name !== 'None' ? event.assister?.name : 'No Assister'} → {event.scorer?.name !== 'None' ? event.scorer?.name : 'No Scorer'}
+                  </span>
+                )}
+                {event.type === 'defend' && (
+                  <span>
+                    <span className="font-bold text-blue-700">Defend</span>: {event.player?.name !== 'None' ? event.player?.name : 'No Player'}
+                  </span>
+                )}
+                {event.type === 'turnover' && (
+                  <span>
+                    <span className="font-bold text-red-700">Turnover</span>: {event.player?.name !== 'None' ? event.player?.name : 'No Player'}{event.turnoverType && event.turnoverType !== 'skip' ? ` (${event.turnoverType})` : ''}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
           {/* Event modal */}
           {eventModal && (
             <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
