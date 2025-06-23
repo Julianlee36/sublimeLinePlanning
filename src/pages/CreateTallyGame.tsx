@@ -9,9 +9,44 @@ const CreateTallyGame = () => {
   const [teamB, setTeamB] = useState<Player[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<'teams' | 'settings'>('teams');
+  const [step, setStep] = useState<'teams' | 'settings' | 'game'>('teams');
   const [duration, setDuration] = useState<number>(0);
   const [scoreCap, setScoreCap] = useState<number>(0);
+  // Game state
+  const [timer, setTimer] = useState<number>(0); // seconds
+  const [timerActive, setTimerActive] = useState(false);
+  const [scoreA, setScoreA] = useState<number>(0);
+  const [scoreB, setScoreB] = useState<number>(0);
+  const [defendsA, setDefendsA] = useState<number>(0);
+  const [defendsB, setDefendsB] = useState<number>(0);
+  const [turnoversA, setTurnoversA] = useState<number>(0);
+  const [turnoversB, setTurnoversB] = useState<number>(0);
+
+  // Timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (step === 'game' && timerActive && (duration === 0 || timer < duration * 60)) {
+      interval = setInterval(() => {
+        setTimer(t => t + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [step, timerActive, duration, timer]);
+
+  // Start game handler
+  const handleStartGame = () => {
+    setStep('game');
+    setTimer(0);
+    setTimerActive(true);
+    setScoreA(0);
+    setScoreB(0);
+    setDefendsA(0);
+    setDefendsB(0);
+    setTurnoversA(0);
+    setTurnoversB(0);
+  };
 
   useEffect(() => {
     if (teamCreationMethod === 'scratch') {
@@ -200,12 +235,57 @@ const CreateTallyGame = () => {
               <button
                 type="button"
                 className="px-6 py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700"
-                // onClick={handleCreateTallyGame} // To be implemented
+                onClick={handleStartGame}
               >
-                Create Tally Game
+                Start Game
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Game in progress step */}
+      {teamCreationMethod === 'scratch' && step === 'game' && (
+        <div className="mt-8 max-w-2xl mx-auto bg-gray-50 p-6 rounded-lg shadow flex flex-col gap-6">
+          {/* Timer */}
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-semibold">Timer:</div>
+            <div className="text-2xl font-mono">
+              {Math.floor(timer / 60).toString().padStart(2, '0')}:{(timer % 60).toString().padStart(2, '0')}
+              {duration > 0 && (
+                <span className="ml-2 text-sm text-gray-500">/ {duration}:00</span>
+              )}
+            </div>
+            <button
+              onClick={() => setTimerActive(!timerActive)}
+              className="ml-4 px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 text-sm"
+            >
+              {timerActive ? 'Pause' : 'Resume'}
+            </button>
+          </div>
+          {/* Scoreboard */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <div className="flex-1 bg-white p-4 rounded-lg shadow text-center">
+              <div className="font-bold text-lg mb-2">Team A</div>
+              <div className="text-3xl font-mono mb-2">{scoreA}</div>
+              <div className="flex justify-center gap-2 mb-2">
+                <button onClick={() => setScoreA(s => (scoreCap === 0 || s < scoreCap) ? s + 1 : s)} className="px-3 py-1 bg-green-500 text-white rounded">Score</button>
+                <button onClick={() => setDefendsA(d => d + 1)} className="px-3 py-1 bg-blue-500 text-white rounded">Defend</button>
+                <button onClick={() => setTurnoversA(t => t + 1)} className="px-3 py-1 bg-red-500 text-white rounded">Turnover</button>
+              </div>
+              <div className="text-sm text-gray-600">Defends: {defendsA} | Turnovers: {turnoversA}</div>
+            </div>
+            <div className="flex-1 bg-white p-4 rounded-lg shadow text-center">
+              <div className="font-bold text-lg mb-2">Team B</div>
+              <div className="text-3xl font-mono mb-2">{scoreB}</div>
+              <div className="flex justify-center gap-2 mb-2">
+                <button onClick={() => setScoreB(s => (scoreCap === 0 || s < scoreCap) ? s + 1 : s)} className="px-3 py-1 bg-green-500 text-white rounded">Score</button>
+                <button onClick={() => setDefendsB(d => d + 1)} className="px-3 py-1 bg-blue-500 text-white rounded">Defend</button>
+                <button onClick={() => setTurnoversB(t => t + 1)} className="px-3 py-1 bg-red-500 text-white rounded">Turnover</button>
+              </div>
+              <div className="text-sm text-gray-600">Defends: {defendsB} | Turnovers: {turnoversB}</div>
+            </div>
+          </div>
         </div>
       )}
 
