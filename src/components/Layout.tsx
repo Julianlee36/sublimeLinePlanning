@@ -1,5 +1,4 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
 
 const Layout = () => {
     const navigate = useNavigate();
