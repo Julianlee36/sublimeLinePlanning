@@ -1,8 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import type { Player } from '../types/player';
 
+const LOCAL_STORAGE_KEY = 'ultimate-stats-active-game';
+
 const CreateTallyGame = () => {
+  const [searchParams] = useSearchParams();
+  const teamId = searchParams.get('teamId');
   const [teamCreationMethod, setTeamCreationMethod] = useState<'lines' | 'scratch' | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [teamA, setTeamA] = useState<Player[]>([]);
@@ -29,6 +34,62 @@ const CreateTallyGame = () => {
   const [modalStepKey, setModalStepKey] = useState(0);
   const [absentPlayers, setAbsentPlayers] = useState<Player[]>([]);
   const [editEventIdx, setEditEventIdx] = useState<number | null>(null);
+
+  // Restore state from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setTeamCreationMethod(parsed.teamCreationMethod ?? null);
+        setPlayers(parsed.players ?? []);
+        setTeamA(parsed.teamA ?? []);
+        setTeamB(parsed.teamB ?? []);
+        setStep(parsed.step ?? 'teams');
+        setDuration(parsed.duration ?? 0);
+        setScoreCap(parsed.scoreCap ?? 0);
+        setTimer(parsed.timer ?? 0);
+        setTimerActive(parsed.timerActive ?? false);
+        setScoreA(parsed.scoreA ?? 0);
+        setScoreB(parsed.scoreB ?? 0);
+        setDefendsA(parsed.defendsA ?? 0);
+        setDefendsB(parsed.defendsB ?? 0);
+        setTurnoversA(parsed.turnoversA ?? 0);
+        setTurnoversB(parsed.turnoversB ?? 0);
+        setEvents(parsed.events ?? []);
+        setAbsentPlayers(parsed.absentPlayers ?? []);
+      } catch {}
+    }
+  }, []);
+
+  // Persist state to localStorage on every change
+  useEffect(() => {
+    const state = {
+      teamCreationMethod,
+      players,
+      teamA,
+      teamB,
+      step,
+      duration,
+      scoreCap,
+      timer,
+      timerActive,
+      scoreA,
+      scoreB,
+      defendsA,
+      defendsB,
+      turnoversA,
+      turnoversB,
+      events,
+      absentPlayers,
+    };
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+  }, [teamCreationMethod, players, teamA, teamB, step, duration, scoreCap, timer, timerActive, scoreA, scoreB, defendsA, defendsB, turnoversA, turnoversB, events, absentPlayers]);
+
+  // After saving or resetting, clear localStorage
+  const clearGameState = () => {
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+  };
 
   // Timer effect
   useEffect(() => {
@@ -124,10 +185,91 @@ const CreateTallyGame = () => {
     }
   };
 
-  // End game
-  const handleEndGame = () => {
+  // End game and save to DB
+  const handleEndGame = async () => {
     setTimerActive(false);
-    // Optionally: show summary, save, etc.
+    if (!teamId) {
+      setError('No team selected.');
+      return;
+    }
+    // Prompt for confirmation
+    const confirmSave = window.confirm('Are you sure you want to end the game and save all data? This cannot be undone.');
+    if (!confirmSave) return;
+    setLoading(true);
+    setError(null);
+    try {
+      // Save game
+      const { data: game, error: gameError } = await supabase
+        .from('games')
+        .insert({
+          team_id: teamId,
+          opponent: 'TBD',
+          game_date: new Date().toISOString(),
+          final_score_us: scoreA,
+          final_score_them: scoreB,
+          game_type: 'Tally',
+        })
+        .select()
+        .single();
+      if (gameError) throw gameError;
+      // Save events
+      const eventRows = events.map((e, idx) => {
+        if (e.type === 'score') {
+          return {
+            game_id: game.id,
+            thrower_id: e.assister?.id || null,
+            receiver_id: e.scorer?.id || null,
+            result: 'goal',
+            point_number: null,
+            timestamp: new Date().toISOString(),
+          };
+        } else if (e.type === 'defend') {
+          return {
+            game_id: game.id,
+            thrower_id: e.player?.id || null,
+            receiver_id: null,
+            result: 'defense',
+            point_number: null,
+            timestamp: new Date().toISOString(),
+          };
+        } else if (e.type === 'turnover') {
+          return {
+            game_id: game.id,
+            thrower_id: e.player?.id || null,
+            receiver_id: null,
+            result: 'turnover',
+            point_number: null,
+            timestamp: new Date().toISOString(),
+          };
+        }
+        return null;
+      }).filter(Boolean);
+      if (eventRows.length > 0) {
+        const { error: eventsError } = await supabase
+          .from('events')
+          .insert(eventRows);
+        if (eventsError) throw eventsError;
+      }
+      // Optionally: show confirmation or reset state
+      setStep('teams');
+      setEvents([]);
+      setScoreA(0);
+      setScoreB(0);
+      setDefendsA(0);
+      setDefendsB(0);
+      setTurnoversA(0);
+      setTurnoversB(0);
+      setTeamA([]);
+      setTeamB([]);
+      setPlayers([]);
+      setAbsentPlayers([]);
+      clearGameState();
+      alert('Game and events saved!');
+    } catch (err: any) {
+      setError(err.message || 'Failed to save game.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Open modal for editing an event
