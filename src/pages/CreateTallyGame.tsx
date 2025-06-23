@@ -7,7 +7,7 @@ const LOCAL_STORAGE_KEY = 'ultimate-stats-active-game';
 
 const CreateTallyGame = () => {
   const [searchParams] = useSearchParams();
-  const teamId = searchParams.get('teamId');
+  // const teamId = searchParams.get('teamId');
   const [teamCreationMethod, setTeamCreationMethod] = useState<'lines' | 'scratch' | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [teamA, setTeamA] = useState<Player[]>([]);
@@ -26,12 +26,12 @@ const CreateTallyGame = () => {
   const [turnoversB, setTurnoversB] = useState<number>(0);
   const [eventModal, setEventModal] = useState<null | { type: 'score' | 'defend' | 'turnover', step: number, data: any }> (null);
   const [events, setEvents] = useState<any[]>([]); // {type, team, player(s), time, extra}
-  const [undoStack, setUndoStack] = useState<any[]>([]);
+  // const [undoStack, setUndoStack] = useState<any[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   // Animation state for modal
   // const [modalStepKey, setModalStepKey] = useState(0);
   const [absentPlayers, setAbsentPlayers] = useState<Player[]>([]);
-  const [editEventIdx, setEditEventIdx] = useState<number | null>(null);
+  // const [editEventIdx, setEditEventIdx] = useState<number | null>(null);
 
   // Restore state from localStorage on mount
   useEffect(() => {
@@ -85,9 +85,7 @@ const CreateTallyGame = () => {
   }, [teamCreationMethod, players, teamA, teamB, step, duration, scoreCap, timer, timerActive, scoreA, scoreB, defendsA, defendsB, turnoversA, turnoversB, events, absentPlayers]);
 
   // After saving or resetting, clear localStorage
-  const clearGameState = () => {
-    localStorage.removeItem(LOCAL_STORAGE_KEY);
-  };
+  // const clearGameState = () => { /* ... */ };
 
   // Timer effect
   useEffect(() => {
@@ -137,10 +135,7 @@ const CreateTallyGame = () => {
   //     : allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()));
 
   // Modal close helper
-  const closeModal = () => {
-    setEventModal(null);
-    // setPlayerQuery('');
-  };
+  // const closeModal = () => { /* ... */ };
 
   // Event handlers
   // const handleEventButton = (type: 'score' | 'defend' | 'turnover') => { /* ... */ };
