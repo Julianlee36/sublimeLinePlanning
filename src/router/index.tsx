@@ -11,6 +11,8 @@ import TeamRoster from "../pages/TeamRoster";
 import ErrorPage from "../pages/ErrorPage";
 import AuthRedirect from "./AuthRedirect.tsx";
 import CreateTallyGame from "../pages/CreateTallyGame.tsx";
+import TeamMenu from "../pages/TeamMenu";
+import AnalyticsDashboard from "../pages/AnalyticsDashboard";
 
 export const createRouter = (session: Session | null) => {
     return createBrowserRouter([
@@ -49,6 +51,14 @@ export const createRouter = (session: Session | null) => {
                                 {
                                     path: "admin/team/:teamId",
                                     element: <TeamRoster />,
+                                },
+                                {
+                                    path: "team/:teamId/menu",
+                                    element: <TeamMenu />,
+                                },
+                                {
+                                    path: "team/:teamId/analytics",
+                                    element: <AnalyticsDashboard />,
                                 },
                             ],
                         },

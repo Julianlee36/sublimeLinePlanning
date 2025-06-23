@@ -50,7 +50,7 @@ const Home = () => {
                             <ul className="space-y-2">
                                 {teams.map(team => (
                                     <li key={team.id}>
-                                        <Link to={`/admin/team/${team.id}`} className="block py-2 px-4 rounded bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-medium transition">
+                                        <Link to={`/team/${team.id}/menu`} className="block py-2 px-4 rounded bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-medium transition">
                                             {team.name}
                                         </Link>
                                     </li>
