@@ -172,7 +172,20 @@ const CreateTallyGame = () => {
   }, [eventModal]);
 
   return (
-    <div className="p-4">
+    <div className="p-2">
+      {/* Back button at the top, small and subtle */}
+      <button
+        onClick={() => {
+          setTeamCreationMethod(null);
+          setTeamA([]);
+          setTeamB([]);
+          setPlayers([]);
+          setAbsentPlayers([]);
+        }}
+        className="mt-2 mb-2 px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded"
+      >
+        &larr; Back
+      </button>
       <h1 className="text-3xl font-bold">Create a New Tally Game</h1>
       {/* Only show method selection if not chosen yet */}
       {teamCreationMethod === null && (
@@ -194,21 +207,6 @@ const CreateTallyGame = () => {
             </button>
           </div>
         </div>
-      )}
-
-      {/* Show back button if a method is selected */}
-      {teamCreationMethod !== null && (
-        <button
-          onClick={() => {
-            setTeamCreationMethod(null);
-            setTeamA([]);
-            setTeamB([]);
-            setPlayers([]);
-          }}
-          className="mt-4 mb-2 px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded"
-        >
-          &larr; Back
-        </button>
       )}
 
       {teamCreationMethod === 'lines' && (
