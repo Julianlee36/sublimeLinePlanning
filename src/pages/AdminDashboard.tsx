@@ -51,44 +51,46 @@ const AdminDashboard = () => {
     };
 
     return (
-        <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">Admin - Manage Teams</h1>
+        <div className="min-h-screen bg-background py-10">
+            <div className="container mx-auto max-w-2xl p-6">
+                <h1 className="text-4xl font-extrabold mb-10 text-gray-900 tracking-tight">Admin - Manage Teams</h1>
 
-            <div className="bg-white p-4 rounded-lg shadow-md mb-8">
-                <h2 className="text-xl font-semibold mb-2">Create New Team</h2>
-                <form onSubmit={handleCreateTeam} className="flex gap-4">
-                    <input
-                        type="text"
-                        placeholder="Enter team name"
-                        value={teamName}
-                        onChange={(e) => setTeamName(e.target.value)}
-                        className="flex-grow block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
-                        required
-                    />
-                    <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                        Create Team
-                    </button>
-                </form>
-                {error && <p className="text-red-500 mt-2">{error}</p>}
-            </div>
+                <div className="bg-white p-8 rounded-2xl shadow-soft mb-12">
+                    <h2 className="text-2xl font-bold mb-4">Create New Team</h2>
+                    <form onSubmit={handleCreateTeam} className="flex flex-col sm:flex-row gap-4">
+                        <input
+                            type="text"
+                            placeholder="Enter team name"
+                            value={teamName}
+                            onChange={(e) => setTeamName(e.target.value)}
+                            className="flex-grow block w-full rounded-xl border-gray-200 shadow focus:border-indigo-400 focus:ring-indigo-400 text-lg p-3"
+                            required
+                        />
+                        <button type="submit" className="inline-flex justify-center py-3 px-8 rounded-xl text-white font-bold bg-indigo-600 shadow hover:bg-indigo-700 transition">
+                            Create Team
+                        </button>
+                    </form>
+                    {error && <p className="text-red-500 mt-2">{error}</p>}
+                </div>
 
-            <div>
-                <h2 className="text-xl font-semibold mb-2">Your Teams</h2>
-                {loading ? (
-                    <p>Loading teams...</p>
-                ) : (
-                    <div className="space-y-3">
-                        {teams.map(team => (
-                            <Link 
-                                to={`/admin/team/${team.id}`} 
-                                key={team.id}
-                                className="block p-4 bg-white hover:bg-gray-50 shadow rounded-lg"
-                            >
-                                <h3 className="font-bold text-lg text-indigo-700">{team.name}</h3>
-                            </Link>
-                        ))}
-                    </div>
-                )}
+                <div>
+                    <h2 className="text-2xl font-bold mb-4">Your Teams</h2>
+                    {loading ? (
+                        <p>Loading teams...</p>
+                    ) : (
+                        <div className="space-y-4">
+                            {teams.map(team => (
+                                <Link 
+                                    to={`/admin/team/${team.id}`} 
+                                    key={team.id}
+                                    className="block p-6 bg-white hover:bg-gray-50 shadow-soft rounded-2xl text-lg font-semibold text-indigo-900 transition"
+                                >
+                                    {team.name}
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
