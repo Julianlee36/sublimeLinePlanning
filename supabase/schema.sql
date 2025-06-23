@@ -11,7 +11,6 @@ CREATE TABLE players (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
-    position TEXT,
     jersey_number INTEGER,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );

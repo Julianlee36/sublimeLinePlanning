@@ -9,7 +9,7 @@ const TeamRoster = () => {
     const { teamId } = useParams<{ teamId: string }>();
     const [team, setTeam] = useState<Team | null>(null);
     const [players, setPlayers] = useState<Player[]>([]);
-    const [newPlayer, setNewPlayer] = useState({ name: '', jersey_number: '', position: '' });
+    const [newPlayer, setNewPlayer] = useState({ name: '', jersey_number: '' });
     const [bulkText, setBulkText] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -69,7 +69,6 @@ const TeamRoster = () => {
                     team_id: teamId,
                     name: newPlayer.name,
                     jersey_number: parseInt(newPlayer.jersey_number) || null,
-                    position: newPlayer.position || null,
                 })
                 .select()
                 .single();
@@ -77,7 +76,7 @@ const TeamRoster = () => {
             if (error) throw error;
             
             setPlayers(prevPlayers => [...prevPlayers, data]);
-            setNewPlayer({ name: '', jersey_number: '', position: '' });
+            setNewPlayer({ name: '', jersey_number: '' });
 
         } catch (error: any) {
             setError(error.message);
@@ -92,12 +91,11 @@ const TeamRoster = () => {
         try {
             const lines = bulkText.trim().split('\n');
             const newPlayers = lines.map(line => {
-                const [name, jersey_number, position] = line.split(',').map(s => s.trim());
+                const [name, jersey_number] = line.split(',').map(s => s.trim());
                 return {
                     team_id: teamId,
                     name,
                     jersey_number: parseInt(jersey_number) || null,
-                    position: position || null,
                 };
             });
 
@@ -129,7 +127,7 @@ const TeamRoster = () => {
                 <div className="bg-white p-6 rounded-xl shadow-md mb-8">
                     <h2 className="text-2xl font-semibold text-gray-700 mb-4">Add New Player</h2>
                     <form onSubmit={handleAddPlayer}>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-1">Name</label>
                                 <input id="name" name="name" value={newPlayer.name} onChange={handleInputChange} placeholder="e.g., Jane Doe" required className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
@@ -137,10 +135,6 @@ const TeamRoster = () => {
                             <div>
                                 <label htmlFor="jersey_number" className="block text-sm font-medium text-gray-600 mb-1">Jersey #</label>
                                 <input id="jersey_number" name="jersey_number" type="number" value={newPlayer.jersey_number} onChange={handleInputChange} placeholder="e.g., 47" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
-                            </div>
-                            <div>
-                                <label htmlFor="position" className="block text-sm font-medium text-gray-600 mb-1">Position</label>
-                                <input id="position" name="position" value={newPlayer.position} onChange={handleInputChange} placeholder="e.g., Handler" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
                             </div>
                         </div>
                         <button type="submit" className="w-full md:w-auto bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
@@ -152,12 +146,12 @@ const TeamRoster = () => {
                 {/* Bulk Add Players Form */}
                 <div className="bg-white p-6 rounded-xl shadow-md mb-8">
                     <h2 className="text-2xl font-semibold text-gray-700 mb-4">Bulk Add Players</h2>
-                    <p className="text-sm text-gray-500 mb-4">Paste player data below, one player per line. Fields separated by commas: Name, Jersey Number, Position.</p>
+                    <p className="text-sm text-gray-500 mb-4">Paste player data below, one player per line. Fields separated by commas: Name, Jersey Number.</p>
                     <form onSubmit={handleBulkAddPlayers}>
                         <textarea
                             value={bulkText}
                             onChange={(e) => setBulkText(e.target.value)}
-                            placeholder={"John Doe, 1, Handler\nJane Smith, 2, Cutter"}
+                            placeholder={"John Doe, 1\nJane Smith, 2"}
                             className="w-full p-3 border border-gray-300 rounded-lg mb-4 h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
                         />
                         <button type="submit" className="w-full md:w-auto bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition">
@@ -177,7 +171,6 @@ const TeamRoster = () => {
                                         <p className="font-bold text-lg text-gray-800">{player.name}</p>
                                         <span className="bg-indigo-100 text-indigo-800 text-sm font-semibold px-2.5 py-0.5 rounded-full">#{player.jersey_number || 'N/A'}</span>
                                     </div>
-                                    <p className="text-md text-gray-600 mt-1">{player.position || 'No position specified'}</p>
                                 </div>
                             ))}
                         </div>
