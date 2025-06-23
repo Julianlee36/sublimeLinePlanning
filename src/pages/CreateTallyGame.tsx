@@ -93,7 +93,7 @@ const CreateTallyGame = () => {
 
   // Autocomplete filter
   const [playerQuery, setPlayerQuery] = useState('');
-  const allPlayers = [...teamA, ...teamB];
+  const allPlayers = Array.from(new Map([...teamA, ...teamB, ...players].map(p => [p.id, p])).values());
   const filteredPlayers = allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()));
 
   // Modal close helper
