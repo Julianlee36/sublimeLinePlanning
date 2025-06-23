@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import type { Game } from '../types/game';
 
 const GameSetup = () => {
     const [opponent, setOpponent] = useState('');
