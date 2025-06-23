@@ -13,6 +13,8 @@ const TeamRoster = () => {
     const [bulkText, setBulkText] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
+    const [isBulkAddOpen, setIsBulkAddOpen] = useState(false);
 
     useEffect(() => {
         if (teamId) {
@@ -123,41 +125,67 @@ const TeamRoster = () => {
             <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
                 <h1 className="text-3xl font-bold text-gray-800 mb-6">Roster for {team.name}</h1>
 
-                {/* Add New Player Form */}
-                <div className="bg-white p-6 rounded-xl shadow-md mb-8">
-                    <h2 className="text-2xl font-semibold text-gray-700 mb-4">Add New Player</h2>
-                    <form onSubmit={handleAddPlayer}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-1">Name</label>
-                                <input id="name" name="name" value={newPlayer.name} onChange={handleInputChange} placeholder="e.g., Jane Doe" required className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
-                            </div>
-                            <div>
-                                <label htmlFor="jersey_number" className="block text-sm font-medium text-gray-600 mb-1">Jersey #</label>
-                                <input id="jersey_number" name="jersey_number" type="number" value={newPlayer.jersey_number} onChange={handleInputChange} placeholder="e.g., 47" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
+                <div className="space-y-4 mb-8">
+                    {/* Collapsible Add New Player Form */}
+                    <div className="bg-white rounded-xl shadow-md">
+                        <button
+                            onClick={() => setIsAddPlayerOpen(!isAddPlayerOpen)}
+                            className="w-full flex justify-between items-center p-6 text-left"
+                        >
+                            <h2 className="text-2xl font-semibold text-gray-700">Add New Player</h2>
+                            <svg className={`w-6 h-6 transform transition-transform ${isAddPlayerOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isAddPlayerOpen ? 'max-h-96' : 'max-h-0'}`}>
+                            <div className="p-6 border-t border-gray-200">
+                                <form onSubmit={handleAddPlayer}>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-1">Name</label>
+                                            <input id="name" name="name" value={newPlayer.name} onChange={handleInputChange} placeholder="e.g., Jane Doe" required className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
+                                        </div>
+                                        <div>
+                                            <label htmlFor="jersey_number" className="block text-sm font-medium text-gray-600 mb-1">Jersey #</label>
+                                            <input id="jersey_number" name="jersey_number" type="number" value={newPlayer.jersey_number} onChange={handleInputChange} placeholder="e.g., 47" className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"/>
+                                        </div>
+                                    </div>
+                                    <button type="submit" className="w-full md:w-auto bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+                                        Add Player
+                                    </button>
+                                </form>
                             </div>
                         </div>
-                        <button type="submit" className="w-full md:w-auto bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
-                            Add Player
-                        </button>
-                    </form>
-                </div>
+                    </div>
 
-                {/* Bulk Add Players Form */}
-                <div className="bg-white p-6 rounded-xl shadow-md mb-8">
-                    <h2 className="text-2xl font-semibold text-gray-700 mb-4">Bulk Add Players</h2>
-                    <p className="text-sm text-gray-500 mb-4">Paste player data below, one player per line. Fields separated by commas: Name, Jersey Number.</p>
-                    <form onSubmit={handleBulkAddPlayers}>
-                        <textarea
-                            value={bulkText}
-                            onChange={(e) => setBulkText(e.target.value)}
-                            placeholder={"John Doe, 1\nJane Smith, 2"}
-                            className="w-full p-3 border border-gray-300 rounded-lg mb-4 h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
-                        />
-                        <button type="submit" className="w-full md:w-auto bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition">
-                            Add Players from Text
+                    {/* Collapsible Bulk Add Players Form */}
+                    <div className="bg-white rounded-xl shadow-md">
+                        <button
+                            onClick={() => setIsBulkAddOpen(!isBulkAddOpen)}
+                            className="w-full flex justify-between items-center p-6 text-left"
+                        >
+                            <h2 className="text-2xl font-semibold text-gray-700">Bulk Add Players</h2>
+                            <svg className={`w-6 h-6 transform transition-transform ${isBulkAddOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
                         </button>
-                    </form>
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isBulkAddOpen ? 'max-h-96' : 'max-h-0'}`}>
+                            <div className="p-6 border-t border-gray-200">
+                                <p className="text-sm text-gray-500 mb-4">Paste player data below, one player per line. Fields separated by commas: Name, Jersey Number.</p>
+                                <form onSubmit={handleBulkAddPlayers}>
+                                    <textarea
+                                        value={bulkText}
+                                        onChange={(e) => setBulkText(e.target.value)}
+                                        placeholder={"John Doe, 1\nJane Smith, 2"}
+                                        className="w-full p-3 border border-gray-300 rounded-lg mb-4 h-32 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                                    />
+                                    <button type="submit" className="w-full md:w-auto bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition">
+                                        Add Players from Text
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Current Roster */}

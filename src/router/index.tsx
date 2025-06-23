@@ -10,6 +10,7 @@ import AdminDashboard from "../pages/AdminDashboard";
 import TeamRoster from "../pages/TeamRoster";
 import ErrorPage from "../pages/ErrorPage";
 import AuthRedirect from "./AuthRedirect.tsx";
+import CreateTallyGame from "../pages/CreateTallyGame.tsx";
 
 export const createRouter = (session: Session | null) => {
     return createBrowserRouter([
@@ -40,6 +41,10 @@ export const createRouter = (session: Session | null) => {
                                 {
                                     path: "admin",
                                     element: <AdminDashboard />,
+                                },
+                                {
+                                    path: "create-tally-game",
+                                    element: <CreateTallyGame />,
                                 },
                                 {
                                     path: "admin/team/:teamId",

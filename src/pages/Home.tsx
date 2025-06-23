@@ -10,12 +10,20 @@ const Home = () => {
                 <p className="text-lg text-gray-600 mb-8">
                     Manage your teams, track games, and view detailed stats with ease.
                 </p>
-                <Link 
-                    to="/admin" 
-                    className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300"
-                >
-                    Go to Your Dashboard
-                </Link>
+                <div className="flex justify-center gap-4">
+                    <Link 
+                        to="/admin" 
+                        className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300"
+                    >
+                        Go to Your Dashboard
+                    </Link>
+                    <Link 
+                        to="/create-tally-game" 
+                        className="bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition duration-300"
+                    >
+                        Create a Tally Game
+                    </Link>
+                </div>
             </div>
         </div>
     );
