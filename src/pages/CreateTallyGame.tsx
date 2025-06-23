@@ -25,6 +25,8 @@ const CreateTallyGame = () => {
   const [events, setEvents] = useState<any[]>([]); // {type, team, player(s), time, extra}
   const [undoStack, setUndoStack] = useState<any[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Animation state for modal
+  const [modalStepKey, setModalStepKey] = useState(0);
 
   // Timer effect
   useEffect(() => {
@@ -156,6 +158,14 @@ const CreateTallyGame = () => {
       }
     }
   };
+
+  // Focus input and animate on modal step change
+  useEffect(() => {
+    if (eventModal && inputRef.current) {
+      inputRef.current.focus();
+    }
+    setModalStepKey(prev => prev + 1); // triggers animation
+  }, [eventModal]);
 
   return (
     <div className="p-4">
@@ -363,7 +373,21 @@ const CreateTallyGame = () => {
           {/* Event modal */}
           {eventModal && (
             <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs mx-auto">
+              <div
+                key={modalStepKey}
+                className="bg-white rounded-t-lg rounded-b-lg md:rounded-lg shadow-lg p-6 w-full max-w-xs mx-auto animate-fade-slide"
+                style={{
+                  maxHeight: '60vh',
+                  position: 'fixed',
+                  left: '50%',
+                  bottom: '0',
+                  transform: 'translateX(-50%)',
+                  width: '100%',
+                  maxWidth: '400px',
+                  overflow: 'auto',
+                  boxShadow: '0 -2px 16px rgba(0,0,0,0.15)',
+                }}
+              >
                 {/* Score event flow */}
                 {eventModal.type === 'score' && eventModal.step === 0 && (
                   <>
@@ -472,4 +496,17 @@ const CreateTallyGame = () => {
   );
 };
 
-export default CreateTallyGame; 
+export default CreateTallyGame;
+
+/* Add animation styles at the bottom of the file */
+/*
+@layer utilities {
+  .animate-fade-slide {
+    animation: fadeSlideIn 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}
+*/ 
