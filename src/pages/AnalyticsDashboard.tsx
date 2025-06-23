@@ -22,62 +22,64 @@ const AnalyticsDashboard = () => {
   const [lineups, setLineups] = useState<Record<string, { Dark: string[]; Light: string[] }>>({});
   const [spotlightOpen, setSpotlightOpen] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const { data: gamesData, error: gamesError } = await supabase
-          .from('games')
+  // Fetch data for dashboard
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: gamesData, error: gamesError } = await supabase
+        .from('games')
+        .select('*')
+        .eq('team_id', teamId)
+        .order('game_date', { ascending: false });
+      if (gamesError) throw gamesError;
+      setGames(gamesData || []);
+
+      const { data: playersData, error: playersError } = await supabase
+        .from('players')
+        .select('*')
+        .eq('team_id', teamId);
+      if (playersError) throw playersError;
+      setPlayers(playersData || []);
+
+      const gameIds = (gamesData || []).map((g: Game) => g.id);
+      let eventsData: Event[] = [];
+      if (gameIds.length > 0) {
+        const { data: eventsRaw, error: eventsError } = await supabase
+          .from('events')
           .select('*')
-          .eq('team_id', teamId)
-          .order('game_date', { ascending: false });
-        if (gamesError) throw gamesError;
-        setGames(gamesData || []);
-
-        const { data: playersData, error: playersError } = await supabase
-          .from('players')
-          .select('*')
-          .eq('team_id', teamId);
-        if (playersError) throw playersError;
-        setPlayers(playersData || []);
-
-        const gameIds = (gamesData || []).map((g: Game) => g.id);
-        let eventsData: Event[] = [];
-        if (gameIds.length > 0) {
-          const { data: eventsRaw, error: eventsError } = await supabase
-            .from('events')
-            .select('*')
-            .in('game_id', gameIds);
-          if (eventsError) throw eventsError;
-          eventsData = eventsRaw || [];
-        }
-        setEvents(eventsData);
-
-        // Fetch lineups for these games
-        if (gameIds.length > 0) {
-          const { data: lineupsRaw, error: lineupsError } = await supabase
-            .from('lineups')
-            .select('game_id, team, player_ids')
-            .in('game_id', gameIds);
-          if (lineupsError) throw lineupsError;
-          // Organize as { [game_id]: { Dark: [...], Light: [...] } }
-          const lineupMap: Record<string, { Dark: string[]; Light: string[] }> = {};
-          (lineupsRaw || []).forEach((row: any) => {
-            if (!lineupMap[row.game_id]) lineupMap[row.game_id] = { Dark: [], Light: [] };
-            if (row.team === 'Dark') lineupMap[row.game_id].Dark = row.player_ids || [];
-            if (row.team === 'Light') lineupMap[row.game_id].Light = row.player_ids || [];
-          });
-          setLineups(lineupMap);
-        } else {
-          setLineups({});
-        }
-      } catch (err: any) {
-        setError(err.message || 'Failed to load analytics data.');
-      } finally {
-        setLoading(false);
+          .in('game_id', gameIds);
+        if (eventsError) throw eventsError;
+        eventsData = eventsRaw || [];
       }
-    };
+      setEvents(eventsData);
+
+      // Fetch lineups for these games
+      if (gameIds.length > 0) {
+        const { data: lineupsRaw, error: lineupsError } = await supabase
+          .from('lineups')
+          .select('game_id, team, player_ids')
+          .in('game_id', gameIds);
+        if (lineupsError) throw lineupsError;
+        // Organize as { [game_id]: { Dark: [...], Light: [...] } }
+        const lineupMap: Record<string, { Dark: string[]; Light: string[] }> = {};
+        (lineupsRaw || []).forEach((row: any) => {
+          if (!lineupMap[row.game_id]) lineupMap[row.game_id] = { Dark: [], Light: [] };
+          if (row.team === 'Dark') lineupMap[row.game_id].Dark = row.player_ids || [];
+          if (row.team === 'Light') lineupMap[row.game_id].Light = row.player_ids || [];
+        });
+        setLineups(lineupMap);
+      } else {
+        setLineups({});
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to load analytics data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (teamId) fetchData();
   }, [teamId]);
 
@@ -234,14 +236,14 @@ const AnalyticsDashboard = () => {
   }, [players, games, lineups]);
 
   // Handler to add a tally point
-  const handleAddTally = async (playerId: string) => {
+  const handleAddTally = async (playerId: string, event?: React.MouseEvent) => {
+    if (event) event.stopPropagation();
     await supabase.from('tally_points').insert({ player_id: playerId });
-    // Optionally: refetch or update tally state here
-    window.location.reload(); // quick refresh for now
+    await fetchData();
   };
   // Handler to remove a tally point
-  const handleRemoveTally = async (playerId: string) => {
-    // Find the most recent tally point for this player
+  const handleRemoveTally = async (playerId: string, event?: React.MouseEvent) => {
+    if (event) event.stopPropagation();
     const { data } = await supabase
       .from('tally_points')
       .select('id')
@@ -250,7 +252,7 @@ const AnalyticsDashboard = () => {
       .limit(1);
     if (data && data.length > 0) {
       await supabase.from('tally_points').delete().eq('id', data[0].id);
-      window.location.reload();
+      await fetchData();
     }
   };
 
@@ -354,9 +356,9 @@ const AnalyticsDashboard = () => {
                             <td className="p-2 border-b">{i + 1}</td>
                             <td className="p-2 border-b">{p.name}</td>
                             <td className="p-2 border-b flex items-center justify-center gap-2">
-                              <button type="button" className="px-2 py-1 bg-green-200 rounded" onClick={() => handleAddTally(p.id)} title="Add point">+</button>
+                              <button type="button" className="px-2 py-1 bg-green-200 rounded" onClick={(e) => handleAddTally(p.id, e)} title="Add point">+</button>
                               {p.tally}
-                              <button type="button" className="px-2 py-1 bg-red-200 rounded" onClick={() => handleRemoveTally(p.id)} title="Remove point">-</button>
+                              <button type="button" className="px-2 py-1 bg-red-200 rounded" onClick={(e) => handleRemoveTally(p.id, e)} title="Remove point">-</button>
                             </td>
                           </tr>
                         ))}
