@@ -18,6 +18,7 @@ const AnalyticsDashboard = () => {
   const [games, setGames] = useState<Game[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [tallyOpen, setTallyOpen] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -181,18 +182,57 @@ const AnalyticsDashboard = () => {
         }
       });
     });
-    if (bestPair.ids[0] && bestPair.ids[1]) {
+    if (bestPair.ids[0] && bestPair.ids[1] && bestPair.value > 0) {
       insights.push(`Consider pairing ${getPlayerName(players, bestPair.ids[0])} with ${getPlayerName(players, bestPair.ids[1])} more often.`);
     }
     // Example: player with most completions
     const mostCompletions = Object.values(playerStats).sort((a: any, b: any) => b.completions - a.completions)[0];
-    if (mostCompletions) {
+    if (mostCompletions && mostCompletions.completions > 0) {
       insights.push(`${mostCompletions.name} is excelling at completions.`);
+    } else if (insights.length === 0) {
+      insights.push('No completion data available yet.');
     }
     return insights;
   }, [players, chemistryMatrix, playerStats]);
 
+  // Player Spotlight: running totals for last 5 games
+  const playerSpotlightStats = useMemo(() => {
+    const stats: Record<string, { name: string; completions: number; turnovers: number; goals: number; assists: number }> = {};
+    players.forEach((p) => {
+      stats[p.id] = { name: p.name, completions: 0, turnovers: 0, goals: 0, assists: 0 };
+    });
+    last5Events.forEach((e) => {
+      if (e.result === 'completion' && e.thrower_id) stats[e.thrower_id].completions++;
+      if (e.result === 'turnover' && e.thrower_id) stats[e.thrower_id].turnovers++;
+      if (e.result === 'goal' && e.receiver_id) stats[e.receiver_id].goals++;
+      if (e.result === 'goal' && e.thrower_id) stats[e.thrower_id].assists++;
+    });
+    return stats;
+  }, [players, last5Events]);
+
+  // Player Tally: count wins for each player in last 5 games
+  const playerTally = useMemo(() => {
+    // For each win, add a tally to all players on the team (assume all players participated)
+    // If you have lineup data, you can refine this to only those who played
+    const tallies: Record<string, { name: string; tally: number }> = {};
+    players.forEach((p) => {
+      tallies[p.id] = { name: p.name, tally: 0 };
+    });
+    last5Games.forEach((g) => {
+      if (g.final_score_us != null && g.final_score_them != null && g.final_score_us > g.final_score_them) {
+        // All players get a tally point for a win
+        players.forEach((p) => {
+          tallies[p.id].tally++;
+        });
+      }
+    });
+    // Sort by tally descending
+    return Object.values(tallies).sort((a, b) => b.tally - a.tally);
+  }, [players, last5Games]);
+
   // --- UI ---
+  const hasData = (completionStats.totalThrows > 0 || events.length > 0);
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-10">
@@ -202,122 +242,170 @@ const AnalyticsDashboard = () => {
         {!loading && !error && (
           <>
             {/* 1. Top-Level Metrics Section */}
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-                <h2 className="text-lg font-semibold mb-2">Win/Loss (Last 5 Games)</h2>
-                <div className="text-3xl font-bold text-green-600">{winLoss.wins}-{winLoss.losses}</div>
-                <div className="text-sm text-gray-500 mt-2">
-                  {completionStats.completionPct > prevCompletionStats.completionPct ? 'Trending Up' : 'Trending Down'}
+            {hasData ? (
+              <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
+                  <h2 className="text-lg font-semibold mb-2">Win/Loss (Last 5 Games)</h2>
+                  <div className="text-3xl font-bold text-green-600">{winLoss.wins}-{winLoss.losses}</div>
+                  <div className="text-sm text-gray-500 mt-2">
+                    {completionStats.completionPct > prevCompletionStats.completionPct ? 'Trending Up' : 'Trending Down'}
+                  </div>
                 </div>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-                <h2 className="text-lg font-semibold mb-2">Team Completion %</h2>
-                <div className="text-3xl font-bold text-blue-600">{completionStats.completionPct}%</div>
-                <div className="text-sm text-gray-500 mt-2">
-                  {completionStats.completionPct - prevCompletionStats.completionPct >= 0 ? '+' : ''}
-                  {completionStats.completionPct - prevCompletionStats.completionPct}% vs previous
+                <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
+                  <h2 className="text-lg font-semibold mb-2">Team Completion %</h2>
+                  <div className="text-3xl font-bold text-blue-600">{completionStats.completionPct}%</div>
+                  <div className="text-sm text-gray-500 mt-2">
+                    {completionStats.completionPct - prevCompletionStats.completionPct >= 0 ? '+' : ''}
+                    {completionStats.completionPct - prevCompletionStats.completionPct}% vs previous
+                  </div>
                 </div>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-                <h2 className="text-lg font-semibold mb-2">Turnover Rate</h2>
-                <div className="text-3xl font-bold text-red-600">{completionStats.turnoverRate}%</div>
-                <div className="text-sm text-gray-500 mt-2">
-                  {completionStats.turnoverRate - prevCompletionStats.turnoverRate >= 0 ? '+' : ''}
-                  {completionStats.turnoverRate - prevCompletionStats.turnoverRate}% vs previous
+                <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
+                  <h2 className="text-lg font-semibold mb-2">Turnover Rate</h2>
+                  <div className="text-3xl font-bold text-red-600">{completionStats.turnoverRate}%</div>
+                  <div className="text-sm text-gray-500 mt-2">
+                    {completionStats.turnoverRate - prevCompletionStats.turnoverRate >= 0 ? '+' : ''}
+                    {completionStats.turnoverRate - prevCompletionStats.turnoverRate}% vs previous
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            ) : (
+              <section className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
+                <div className="text-lg text-gray-500">No team stats available yet.</div>
+              </section>
+            )}
 
             {/* 2. Player Spotlight Section */}
-            <section className="bg-white rounded-lg shadow p-6 mt-8">
-              <h2 className="text-xl font-bold mb-4">Player Spotlight</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* MVP */}
-                {(() => {
-                  const mvp = Object.values(playerStats).sort((a: any, b: any) => (b.goals + b.assists + b.completions) - (a.goals + a.assists + a.completions))[0];
-                  return mvp ? (
-                    <div className="bg-green-100 rounded p-4 text-center">
-                      <div className="text-lg font-semibold text-green-800">MVP: {mvp.name}</div>
-                      <div className="text-sm text-gray-700">{mvp.goals} goals, {mvp.assists} assists, {mvp.completions} completions</div>
+            {hasData ? (
+              <section className="bg-white rounded-lg shadow p-6 mt-8">
+                <h2 className="text-xl font-bold mb-4">Player Spotlight (Last 5 Games)</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {Object.values(playerSpotlightStats).map((stat) => (
+                    <div key={stat.name} className="bg-gray-100 rounded p-4 text-center">
+                      <div className="text-lg font-semibold text-gray-800">{stat.name}</div>
+                      <div className="text-sm text-gray-700">Completions: {stat.completions}</div>
+                      <div className="text-sm text-gray-700">Turnovers: {stat.turnovers}</div>
+                      <div className="text-sm text-gray-700">Goals: {stat.goals}</div>
+                      <div className="text-sm text-gray-700">Assists: {stat.assists}</div>
                     </div>
-                  ) : null;
-                })()}
-                {/* Improvement */}
-                {(() => {
-                  const improving = Object.values(playerTrends).sort((a: any, b: any) => b.completionChange - a.completionChange)[0];
-                  return improving && improving.completionChange > 0 ? (
-                    <div className="bg-yellow-100 rounded p-4 text-center">
-                      <div className="text-lg font-semibold text-yellow-800">Improvement: {improving.name}</div>
-                      <div className="text-sm text-gray-700">Completion rate up {improving.completionChange}% last 3 games</div>
-                    </div>
-                  ) : null;
-                })()}
-                {/* Concern */}
-                {(() => {
-                  const concern = Object.values(playerTrends).sort((a: any, b: any) => a.completionChange - b.completionChange)[0];
-                  return concern && concern.completionChange < 0 ? (
-                    <div className="bg-red-100 rounded p-4 text-center">
-                      <div className="text-lg font-semibold text-red-800">Concern: {concern.name}</div>
-                      <div className="text-sm text-gray-700">Completion rate down {Math.abs(concern.completionChange)}%</div>
-                    </div>
-                  ) : null;
-                })()}
-              </div>
-            </section>
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <section className="bg-white rounded-lg shadow p-6 mt-8 flex flex-col items-center">
+                <div className="text-lg text-gray-500">No player stats available yet.</div>
+              </section>
+            )}
 
-            {/* 3. Chemistry Heat Map */}
-            <section className="bg-white rounded-lg shadow p-6 mt-8">
-              <h2 className="text-xl font-bold mb-4">Chemistry Heat Map</h2>
-              <div className="overflow-x-auto">
-                <table className="min-w-full border text-center">
-                  <thead>
-                    <tr>
-                      <th className="p-2 border-b"></th>
-                      {players.map((p) => (
-                        <th key={p.id} className="p-2 border-b">{p.name}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {players.map((rowP) => (
-                      <tr key={rowP.id}>
-                        <td className="p-2 border-b font-semibold">{rowP.name}</td>
-                        {players.map((colP) => {
-                          if (rowP.id === colP.id) {
-                            return <td key={colP.id} className="bg-gray-100">-</td>;
-                          }
-                          const value = chemistryMatrix[rowP.id][colP.id];
-                          let color = '';
-                          if (value >= 10) color = 'bg-green-200';
-                          else if (value >= 5) color = 'bg-yellow-200';
-                          else if (value > 0) color = 'bg-red-200';
-                          return (
-                            <td key={colP.id} className={`${color} cursor-pointer`}>{value}</td>
-                          );
-                        })}
+            {/* 3. Player Tally Section */}
+            {hasData ? (
+              <section className="bg-white rounded-lg shadow p-6 mt-8">
+                <button
+                  className="w-full text-left font-bold text-xl mb-4 flex items-center justify-between"
+                  onClick={() => setTallyOpen((open) => !open)}
+                >
+                  Player Tally
+                  <span>{tallyOpen ? '▲' : '▼'}</span>
+                </button>
+                {tallyOpen && (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full border text-center">
+                      <thead>
+                        <tr>
+                          <th className="p-2 border-b">Rank</th>
+                          <th className="p-2 border-b">Player</th>
+                          <th className="p-2 border-b">Tally Points</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {playerTally.map((p, i) => (
+                          <tr key={p.name} className={i === 0 ? 'bg-green-100 font-bold' : ''}>
+                            <td className="p-2 border-b">{i + 1}</td>
+                            <td className="p-2 border-b">{p.name}</td>
+                            <td className="p-2 border-b">{p.tally}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            ) : (
+              <section className="bg-white rounded-lg shadow p-6 mt-8 flex flex-col items-center">
+                <div className="text-lg text-gray-500">No tally data available yet.</div>
+              </section>
+            )}
+
+            {/* 4. Chemistry Heat Map */}
+            {hasData ? (
+              <section className="bg-white rounded-lg shadow p-6 mt-8">
+                <h2 className="text-xl font-bold mb-4">Chemistry Heat Map</h2>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border text-center">
+                    <thead>
+                      <tr>
+                        <th className="p-2 border-b"></th>
+                        {players.map((p) => (
+                          <th key={p.id} className="p-2 border-b">{p.name}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <div className="mt-2 text-sm text-gray-500">Top 3 partnerships highlighted</div>
-              </div>
-            </section>
+                    </thead>
+                    <tbody>
+                      {players.map((rowP) => (
+                        <tr key={rowP.id}>
+                          <td className="p-2 border-b font-semibold">{rowP.name}</td>
+                          {players.map((colP) => {
+                            if (rowP.id === colP.id) {
+                              return <td key={colP.id} className="bg-gray-100">-</td>;
+                            }
+                            const value = chemistryMatrix[rowP.id][colP.id];
+                            let color = '';
+                            if (value >= 10) color = 'bg-green-200';
+                            else if (value >= 5) color = 'bg-yellow-200';
+                            else if (value > 0) color = 'bg-red-200';
+                            return (
+                              <td key={colP.id} className={`${color} cursor-pointer`}>{value}</td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="mt-2 text-sm text-gray-500">Top 3 partnerships highlighted</div>
+                </div>
+              </section>
+            ) : (
+              <section className="bg-white rounded-lg shadow p-6 mt-8 flex flex-col items-center">
+                <div className="text-lg text-gray-500">No chemistry data available yet.</div>
+              </section>
+            )}
 
-            {/* 4. Line Performance Analysis (placeholder) */}
-            <section className="bg-white rounded-lg shadow p-6 mt-8">
-              <h2 className="text-xl font-bold mb-4">Line Performance Analysis</h2>
-              <div className="text-gray-500">Lineup analytics coming soon.</div>
-            </section>
+            {/* 5. Line Performance Analysis (placeholder) */}
+            {hasData ? (
+              <section className="bg-white rounded-lg shadow p-6 mt-8">
+                <h2 className="text-xl font-bold mb-4">Line Performance Analysis</h2>
+                <div className="text-gray-500">Lineup analytics coming soon.</div>
+              </section>
+            ) : (
+              <section className="bg-white rounded-lg shadow p-6 mt-8 flex flex-col items-center">
+                <div className="text-lg text-gray-500">No line performance data available yet.</div>
+              </section>
+            )}
 
-            {/* 5. Quick Insights/Action Items */}
-            <section className="bg-white rounded-lg shadow p-6 mt-8">
-              <h2 className="text-xl font-bold mb-4">Quick Insights & Action Items</h2>
-              <ul className="list-disc pl-6 space-y-2 text-left">
-                {quickInsights.map((insight, i) => (
-                  <li key={i}>{insight}</li>
-                ))}
-              </ul>
-            </section>
+            {/* 6. Quick Insights/Action Items */}
+            {hasData ? (
+              <section className="bg-white rounded-lg shadow p-6 mt-8">
+                <h2 className="text-xl font-bold mb-4">Quick Insights & Action Items</h2>
+                <ul className="list-disc pl-6 space-y-2 text-left">
+                  {quickInsights.map((insight, i) => (
+                    <li key={i}>{insight}</li>
+                  ))}
+                </ul>
+              </section>
+            ) : (
+              <section className="bg-white rounded-lg shadow p-6 mt-8 flex flex-col items-center">
+                <div className="text-lg text-gray-500">No insights available yet.</div>
+              </section>
+            )}
           </>
         )}
       </div>
