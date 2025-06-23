@@ -9,6 +9,9 @@ const CreateTallyGame = () => {
   const [teamB, setTeamB] = useState<Player[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState<'teams' | 'settings'>('teams');
+  const [duration, setDuration] = useState<number>(0);
+  const [scoreCap, setScoreCap] = useState<number>(0);
 
   useEffect(() => {
     if (teamCreationMethod === 'scratch') {
@@ -52,35 +55,51 @@ const CreateTallyGame = () => {
   return (
     <div className="p-4">
       <h1 className="text-3xl font-bold">Create a New Tally Game</h1>
-      
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold">Step 1: Specify Teams</h2>
-        <p className="mt-2 text-gray-600">How would you like to create the teams for this game?</p>
-        <div className="mt-4 flex gap-4">
-          <button
-            onClick={() => setTeamCreationMethod('lines')}
-            className={`px-4 py-2 rounded-lg font-semibold ${teamCreationMethod === 'lines' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-          >
-            Use Pre-designated Lines
-          </button>
-          <button
-            onClick={() => setTeamCreationMethod('scratch')}
-            className={`px-4 py-2 rounded-lg font-semibold ${teamCreationMethod === 'scratch' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-          >
-            Create Teams from Scratch
-          </button>
+      {/* Only show method selection if not chosen yet */}
+      {teamCreationMethod === null && (
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold">Step 1: Specify Teams</h2>
+          <p className="mt-2 text-gray-600">How would you like to create the teams for this game?</p>
+          <div className="mt-4 flex gap-4">
+            <button
+              onClick={() => setTeamCreationMethod('lines')}
+              className={`px-4 py-2 rounded-lg font-semibold ${teamCreationMethod === 'lines' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+            >
+              Use Pre-designated Lines
+            </button>
+            <button
+              onClick={() => setTeamCreationMethod('scratch')}
+              className={`px-4 py-2 rounded-lg font-semibold ${teamCreationMethod === 'scratch' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+            >
+              Create Teams from Scratch
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Show back button if a method is selected */}
+      {teamCreationMethod !== null && (
+        <button
+          onClick={() => {
+            setTeamCreationMethod(null);
+            setTeamA([]);
+            setTeamB([]);
+            setPlayers([]);
+          }}
+          className="mt-4 mb-2 px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded"
+        >
+          &larr; Back
+        </button>
+      )}
 
       {teamCreationMethod === 'lines' && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold">Select Pre-designated Lines</h3>
           <p className="mt-2 text-gray-600">This feature is coming soon!</p>
-          {/* Placeholder for line selection UI */}
         </div>
       )}
 
-      {teamCreationMethod === 'scratch' && (
+      {teamCreationMethod === 'scratch' && step === 'teams' && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold">Create Teams from Scratch</h3>
           {loading && <p>Loading players...</p>}
@@ -123,6 +142,63 @@ const CreateTallyGame = () => {
                 </div>
             </div>
           </div>
+          {/* Next button only if both teams have at least one player */}
+          <div className="mt-6 flex justify-end">
+            <button
+              disabled={teamA.length === 0 || teamB.length === 0}
+              onClick={() => setStep('settings')}
+              className={`px-6 py-2 rounded-lg font-semibold text-white ${teamA.length === 0 || teamB.length === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Game settings step */}
+      {teamCreationMethod === 'scratch' && step === 'settings' && (
+        <div className="mt-8 max-w-md mx-auto bg-gray-50 p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-4">Game Settings</h3>
+          <form className="space-y-4">
+            <div>
+              <label className="block font-medium mb-1">Game Duration (minutes)</label>
+              <input
+                type="number"
+                min="0"
+                value={duration}
+                onChange={e => setDuration(Number(e.target.value))}
+                className="w-full p-2 border rounded"
+                placeholder="0 for unlimited"
+              />
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Score Cap</label>
+              <input
+                type="number"
+                min="0"
+                value={scoreCap}
+                onChange={e => setScoreCap(Number(e.target.value))}
+                className="w-full p-2 border rounded"
+                placeholder="0 for uncapped"
+              />
+            </div>
+            <div className="flex justify-between mt-6">
+              <button
+                type="button"
+                onClick={() => setStep('teams')}
+                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+              >
+                &larr; Back
+              </button>
+              <button
+                type="button"
+                className="px-6 py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700"
+                // onClick={handleCreateTallyGame} // To be implemented
+              >
+                Create Tally Game
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
