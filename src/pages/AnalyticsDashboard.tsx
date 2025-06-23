@@ -235,44 +235,13 @@ const AnalyticsDashboard = () => {
     return Object.values(tallies).sort((a, b) => b.tally - a.tally);
   }, [players, games, lineups]);
 
-  // Handler to add a tally point
-  const handleAddTally = async (playerId: string, event?: React.MouseEvent) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-    console.log('Add tally clicked for', playerId);
-    await supabase.from('tally_points').insert({ player_id: playerId });
-    await fetchData();
-    console.log('Add tally finished for', playerId);
-  };
-  // Handler to remove a tally point
-  const handleRemoveTally = async (playerId: string, event?: React.MouseEvent) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-    console.log('Remove tally clicked for', playerId);
-    const { data } = await supabase
-      .from('tally_points')
-      .select('id')
-      .eq('player_id', playerId)
-      .order('created_at', { ascending: false })
-      .limit(1);
-    if (data && data.length > 0) {
-      await supabase.from('tally_points').delete().eq('id', data[0].id);
-      await fetchData();
-      console.log('Remove tally finished for', playerId);
-    }
-  };
-
   // --- UI ---
   const hasData = (completionStats.totalThrows > 0 || events.length > 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-10">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-6 text-center">Analytics Dashboard</h1>
+    <div className="min-h-screen bg-background p-4 md:p-10">
+      <div className="max-w-6xl mx-auto space-y-12">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-10 text-center tracking-tight">Analytics Dashboard</h1>
         {loading && <div className="text-center text-lg">Loading analytics...</div>}
         {error && <div className="text-center text-red-600">{error}</div>}
         {!loading && !error && (
@@ -365,11 +334,7 @@ const AnalyticsDashboard = () => {
                           <tr key={p.name} className={i === 0 ? 'bg-green-100 font-bold' : ''}>
                             <td className="p-2 border-b">{i + 1}</td>
                             <td className="p-2 border-b">{p.name}</td>
-                            <td className="p-2 border-b flex items-center justify-center gap-2">
-                              <button type="button" className="px-2 py-1 bg-green-200 rounded" onClick={(e) => handleAddTally(p.id, e)} title="Add point">+</button>
-                              {p.tally}
-                              <button type="button" className="px-2 py-1 bg-red-200 rounded" onClick={(e) => handleRemoveTally(p.id, e)} title="Remove point">-</button>
-                            </td>
+                            <td className="p-2 border-b">{p.tally}</td>
                           </tr>
                         ))}
                       </tbody>
