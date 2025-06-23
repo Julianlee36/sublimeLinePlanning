@@ -354,9 +354,9 @@ const AnalyticsDashboard = () => {
                             <td className="p-2 border-b">{i + 1}</td>
                             <td className="p-2 border-b">{p.name}</td>
                             <td className="p-2 border-b flex items-center justify-center gap-2">
-                              <button className="px-2 py-1 bg-green-200 rounded" onClick={() => handleAddTally(p.id)} title="Add point">+</button>
+                              <button type="button" className="px-2 py-1 bg-green-200 rounded" onClick={() => handleAddTally(p.id)} title="Add point">+</button>
                               {p.tally}
-                              <button className="px-2 py-1 bg-red-200 rounded" onClick={() => handleRemoveTally(p.id)} title="Remove point">-</button>
+                              <button type="button" className="px-2 py-1 bg-red-200 rounded" onClick={() => handleRemoveTally(p.id)} title="Remove point">-</button>
                             </td>
                           </tr>
                         ))}
