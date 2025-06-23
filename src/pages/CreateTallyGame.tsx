@@ -99,10 +99,7 @@ const CreateTallyGame = () => {
   const allPlayers = Array.from(new Map([...teamA, ...teamB, ...players].filter(p => !absentPlayers.some(a => a.id === p.id)).map(p => [p.id, p])).values());
   const filteredPlayers =
     eventModal
-      ? [
-          { id: '0', name: 'None' },
-          ...allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase())),
-        ]
+      ? allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()))
       : allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()));
 
   // Modal close helper
@@ -140,6 +137,7 @@ const CreateTallyGame = () => {
       if (step === 0) {
         // Pick assister
         setEventModal({ type, step: 1, data: { ...data, assister: value } });
+        setPlayerQuery(''); // Clear input for scorer selection
       } else if (step === 1) {
         // Pick scorer
         setEvents([...events, { type: 'score', assister: data.assister, scorer: value, time: timer }]);
