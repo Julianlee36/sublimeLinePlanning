@@ -128,29 +128,6 @@ const AnalyticsDashboard = () => {
     return stats;
   }, [players, events]);
 
-  // MVP: highest sum of goals+assists+completions, improvement/concern: compare last 3 vs previous 3 games
-  const playerTrends = useMemo(() => {
-    const last3Games = games.slice(0, 3);
-    const prev3Games = games.slice(3, 6);
-    const last3Ids = last3Games.map((g) => g.id);
-    const prev3Ids = prev3Games.map((g) => g.id);
-    const last3Events = events.filter((e) => last3Ids.includes(e.game_id));
-    const prev3Events = events.filter((e) => prev3Ids.includes(e.game_id));
-    const stats: Record<string, any> = {};
-    players.forEach((p) => {
-      const last3Completions = last3Events.filter((e) => e.thrower_id === p.id && e.result === 'completion').length;
-      const prev3Completions = prev3Events.filter((e) => e.thrower_id === p.id && e.result === 'completion').length;
-      const last3Turnovers = last3Events.filter((e) => e.thrower_id === p.id && e.result === 'turnover').length;
-      const prev3Turnovers = prev3Events.filter((e) => e.thrower_id === p.id && e.result === 'turnover').length;
-      stats[p.id] = {
-        name: p.name,
-        completionChange: prev3Completions > 0 ? Math.round(((last3Completions - prev3Completions) / prev3Completions) * 100) : 0,
-        turnoverChange: prev3Turnovers > 0 ? Math.round(((last3Turnovers - prev3Turnovers) / prev3Turnovers) * 100) : 0,
-      };
-    });
-    return stats;
-  }, [players, games, events]);
-
   // 3. Chemistry Heat Map (player-pair completions)
   const chemistryMatrix = useMemo(() => {
     // Matrix: thrower_id -> receiver_id -> completions
