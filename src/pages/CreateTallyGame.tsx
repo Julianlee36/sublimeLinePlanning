@@ -6,7 +6,7 @@ import type { Player } from '../types/player';
 const LOCAL_STORAGE_KEY = 'ultimate-stats-active-game';
 
 const CreateTallyGame = () => {
-  const [searchParams] = useSearchParams();
+  // const [searchParams] = useSearchParams();
   // const teamId = searchParams.get('teamId');
   const [teamCreationMethod, setTeamCreationMethod] = useState<'lines' | 'scratch' | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
@@ -24,7 +24,7 @@ const CreateTallyGame = () => {
   const [defendsB, setDefendsB] = useState<number>(0);
   const [turnoversA, setTurnoversA] = useState<number>(0);
   const [turnoversB, setTurnoversB] = useState<number>(0);
-  const [eventModal, setEventModal] = useState<null | { type: 'score' | 'defend' | 'turnover', step: number, data: any }> (null);
+  // const [eventModal, setEventModal] = useState<null | { type: 'score' | 'defend' | 'turnover', step: number, data: any }>(null);
   const [events, setEvents] = useState<any[]>([]); // {type, team, player(s), time, extra}
   // const [undoStack, setUndoStack] = useState<any[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
