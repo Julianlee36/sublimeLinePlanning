@@ -28,18 +28,18 @@ const Home = () => {
     }, []);
 
     return (
-        <div className="bg-gray-50 flex items-center justify-center min-h-screen -m-4">
-            <div className="text-center p-8 w-full max-w-md">
-                <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
+        <div className="bg-background flex items-center justify-center min-h-screen -m-4">
+            <div className="text-center p-10 w-full max-w-lg space-y-12">
+                <h1 className="text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
                     Welcome to Ultimate Stats
                 </h1>
-                <p className="text-lg text-gray-600 mb-8">
+                <p className="text-xl text-gray-600 mb-10">
                     Manage your teams, track games, and view detailed stats with ease.
                 </p>
                 <div className="space-y-8">
                     {/* Pick a team */}
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <h2 className="text-xl font-semibold mb-2">Pick a Team</h2>
+                    <div className="bg-white rounded-2xl shadow-soft p-8">
+                        <h2 className="text-2xl font-bold mb-4">Pick a Team</h2>
                         {loading ? (
                             <p>Loading teams...</p>
                         ) : error ? (
@@ -47,10 +47,10 @@ const Home = () => {
                         ) : teams.length === 0 ? (
                             <p className="text-gray-500">No teams found. Create one below!</p>
                         ) : (
-                            <ul className="space-y-2">
+                            <ul className="space-y-3">
                                 {teams.map(team => (
                                     <li key={team.id}>
-                                        <Link to={`/team/${team.id}/menu`} className="block py-2 px-4 rounded bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-medium transition">
+                                        <Link to={`/team/${team.id}/menu`} className="block py-3 px-6 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-900 font-semibold shadow transition">
                                             {team.name}
                                         </Link>
                                     </li>
@@ -59,15 +59,15 @@ const Home = () => {
                         )}
                     </div>
                     {/* Teams management */}
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <h2 className="text-xl font-semibold mb-2">Teams</h2>
-                        <Link to="/admin" className="block py-2 px-4 rounded bg-green-100 hover:bg-green-200 text-green-800 font-medium transition">
+                    <div className="bg-white rounded-2xl shadow-soft p-8">
+                        <h2 className="text-2xl font-bold mb-4">Teams</h2>
+                        <Link to="/admin" className="block py-3 px-6 rounded-xl bg-green-50 hover:bg-green-100 text-green-900 font-semibold shadow transition">
                             Manage Teams & Players
                         </Link>
                     </div>
                     {/* Settings */}
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <h2 className="text-xl font-semibold mb-2">Settings</h2>
+                    <div className="bg-white rounded-2xl shadow-soft p-8">
+                        <h2 className="text-2xl font-bold mb-4">Settings</h2>
                         <p className="text-gray-500">Settings functionality coming soon.</p>
                     </div>
                 </div>
