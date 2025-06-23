@@ -250,6 +250,23 @@ const CreateTallyGame = () => {
           .insert(eventRows);
         if (eventsError) throw eventsError;
       }
+      // Save lineups for both teams
+      const lineupRows = [
+        {
+          game_id: game.id,
+          team: 'Dark',
+          player_ids: teamA.map((p) => p.id),
+        },
+        {
+          game_id: game.id,
+          team: 'Light',
+          player_ids: teamB.map((p) => p.id),
+        },
+      ];
+      const { error: lineupError } = await supabase
+        .from('lineups')
+        .insert(lineupRows);
+      if (lineupError) throw lineupError;
       // Optionally: show confirmation or reset state
       setStep('teams');
       setEvents([]);

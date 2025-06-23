@@ -19,6 +19,7 @@ const AnalyticsDashboard = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [tallyOpen, setTallyOpen] = useState(true);
+  const [lineups, setLineups] = useState<Record<string, { Dark: string[]; Light: string[] }>>({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,6 +52,25 @@ const AnalyticsDashboard = () => {
           eventsData = eventsRaw || [];
         }
         setEvents(eventsData);
+
+        // Fetch lineups for these games
+        if (gameIds.length > 0) {
+          const { data: lineupsRaw, error: lineupsError } = await supabase
+            .from('lineups')
+            .select('game_id, team, player_ids')
+            .in('game_id', gameIds);
+          if (lineupsError) throw lineupsError;
+          // Organize as { [game_id]: { Dark: [...], Light: [...] } }
+          const lineupMap: Record<string, { Dark: string[]; Light: string[] }> = {};
+          (lineupsRaw || []).forEach((row: any) => {
+            if (!lineupMap[row.game_id]) lineupMap[row.game_id] = { Dark: [], Light: [] };
+            if (row.team === 'Dark') lineupMap[row.game_id].Dark = row.player_ids || [];
+            if (row.team === 'Light') lineupMap[row.game_id].Light = row.player_ids || [];
+          });
+          setLineups(lineupMap);
+        } else {
+          setLineups({});
+        }
       } catch (err: any) {
         setError(err.message || 'Failed to load analytics data.');
       } finally {
@@ -187,25 +207,30 @@ const AnalyticsDashboard = () => {
     return stats;
   }, [players, last5Events]);
 
-  // Player Tally: count wins for each player in last 5 games
+  // Player Tally: count wins for each player in last 5 games using lineups
   const playerTally = useMemo(() => {
-    // For each win, add a tally to all players on the team (assume all players participated)
-    // If you have lineup data, you can refine this to only those who played
     const tallies: Record<string, { name: string; tally: number }> = {};
     players.forEach((p) => {
       tallies[p.id] = { name: p.name, tally: 0 };
     });
     last5Games.forEach((g) => {
-      if (g.final_score_us != null && g.final_score_them != null && g.final_score_us > g.final_score_them) {
-        // All players get a tally point for a win
-        players.forEach((p) => {
-          tallies[p.id].tally++;
-        });
+      if (
+        g.final_score_us != null &&
+        g.final_score_them != null &&
+        lineups[g.id]
+      ) {
+        let winner: 'Dark' | 'Light' | null = null;
+        if (g.final_score_us > g.final_score_them) winner = 'Dark';
+        else if (g.final_score_them > g.final_score_us) winner = 'Light';
+        if (winner) {
+          (lineups[g.id][winner] || []).forEach((pid) => {
+            if (tallies[pid]) tallies[pid].tally++;
+          });
+        }
       }
     });
-    // Sort by tally descending
     return Object.values(tallies).sort((a, b) => b.tally - a.tally);
-  }, [players, last5Games]);
+  }, [players, last5Games, lineups]);
 
   // --- UI ---
   const hasData = (completionStats.totalThrows > 0 || events.length > 0);
