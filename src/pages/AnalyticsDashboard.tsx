@@ -241,8 +241,10 @@ const AnalyticsDashboard = () => {
       event.preventDefault();
       event.stopPropagation();
     }
+    console.log('Add tally clicked for', playerId);
     await supabase.from('tally_points').insert({ player_id: playerId });
     await fetchData();
+    console.log('Add tally finished for', playerId);
   };
   // Handler to remove a tally point
   const handleRemoveTally = async (playerId: string, event?: React.MouseEvent) => {
@@ -250,6 +252,7 @@ const AnalyticsDashboard = () => {
       event.preventDefault();
       event.stopPropagation();
     }
+    console.log('Remove tally clicked for', playerId);
     const { data } = await supabase
       .from('tally_points')
       .select('id')
@@ -259,6 +262,7 @@ const AnalyticsDashboard = () => {
     if (data && data.length > 0) {
       await supabase.from('tally_points').delete().eq('id', data[0].id);
       await fetchData();
+      console.log('Remove tally finished for', playerId);
     }
   };
 
