@@ -207,13 +207,13 @@ const AnalyticsDashboard = () => {
     return stats;
   }, [players, last5Events]);
 
-  // Player Tally: count wins for each player in last 5 games using lineups
+  // Player Tally: count wins for each player in all games using lineups
   const playerTally = useMemo(() => {
     const tallies: Record<string, { name: string; tally: number }> = {};
     players.forEach((p) => {
       tallies[p.id] = { name: p.name, tally: 0 };
     });
-    last5Games.forEach((g) => {
+    games.forEach((g) => {
       if (
         g.final_score_us != null &&
         g.final_score_them != null &&
@@ -230,7 +230,7 @@ const AnalyticsDashboard = () => {
       }
     });
     return Object.values(tallies).sort((a, b) => b.tally - a.tally);
-  }, [players, last5Games, lineups]);
+  }, [players, games, lineups]);
 
   // --- UI ---
   const hasData = (completionStats.totalThrows > 0 || events.length > 0);

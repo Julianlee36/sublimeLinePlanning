@@ -45,5 +45,6 @@ CREATE TABLE lineups (
     point_number INTEGER,
     player_ids UUID[],
     is_offense BOOLEAN,
+    team TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 ); 
