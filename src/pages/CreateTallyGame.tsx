@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+// import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import type { Player } from '../types/player';
 
@@ -26,7 +26,7 @@ const CreateTallyGame = () => {
   const [turnoversB, setTurnoversB] = useState<number>(0);
   const [events, setEvents] = useState<any[]>([]); // {type, team, player(s), time, extra}
   // const [undoStack, setUndoStack] = useState<any[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
+  // const inputRef = useRef<HTMLInputElement>(null);
   // Animation state for modal
   // const [modalStepKey, setModalStepKey] = useState(0);
   const [absentPlayers, setAbsentPlayers] = useState<Player[]>([]);
