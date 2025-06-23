@@ -210,9 +210,9 @@ const AnalyticsDashboard = () => {
 
   // Player Tally: count wins for each player in all games using lineups
   const playerTally = useMemo(() => {
-    const tallies: Record<string, { name: string; tally: number }> = {};
+    const tallies: Record<string, { id: string; name: string; tally: number }> = {};
     players.forEach((p) => {
-      tallies[p.id] = { name: p.name, tally: 0 };
+      tallies[p.id] = { id: p.id, name: p.name, tally: 0 };
     });
     games.forEach((g) => {
       if (
@@ -232,6 +232,27 @@ const AnalyticsDashboard = () => {
     });
     return Object.values(tallies).sort((a, b) => b.tally - a.tally);
   }, [players, games, lineups]);
+
+  // Handler to add a tally point
+  const handleAddTally = async (playerId: string) => {
+    await supabase.from('tally_points').insert({ player_id: playerId });
+    // Optionally: refetch or update tally state here
+    window.location.reload(); // quick refresh for now
+  };
+  // Handler to remove a tally point
+  const handleRemoveTally = async (playerId: string) => {
+    // Find the most recent tally point for this player
+    const { data } = await supabase
+      .from('tally_points')
+      .select('id')
+      .eq('player_id', playerId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (data && data.length > 0) {
+      await supabase.from('tally_points').delete().eq('id', data[0].id);
+      window.location.reload();
+    }
+  };
 
   // --- UI ---
   const hasData = (completionStats.totalThrows > 0 || events.length > 0);
@@ -332,7 +353,11 @@ const AnalyticsDashboard = () => {
                           <tr key={p.name} className={i === 0 ? 'bg-green-100 font-bold' : ''}>
                             <td className="p-2 border-b">{i + 1}</td>
                             <td className="p-2 border-b">{p.name}</td>
-                            <td className="p-2 border-b">{p.tally}</td>
+                            <td className="p-2 border-b flex items-center justify-center gap-2">
+                              <button className="px-2 py-1 bg-green-200 rounded" onClick={() => handleAddTally(p.id)} title="Add point">+</button>
+                              {p.tally}
+                              <button className="px-2 py-1 bg-red-200 rounded" onClick={() => handleRemoveTally(p.id)} title="Remove point">-</button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -398,7 +423,6 @@ const AnalyticsDashboard = () => {
                   <thead>
                     <tr>
                       <th className="p-2 border-b">Date</th>
-                      <th className="p-2 border-b">Opponent</th>
                       <th className="p-2 border-b">Score</th>
                       <th className="p-2 border-b">Winner</th>
                     </tr>
@@ -411,14 +435,13 @@ const AnalyticsDashboard = () => {
                     }).map((g) => {
                       let winner = '-';
                       if (g.final_score_us != null && g.final_score_them != null) {
-                        if (g.final_score_us > g.final_score_them) winner = 'Us';
-                        else if (g.final_score_them > g.final_score_us) winner = 'Them';
+                        if (g.final_score_us > g.final_score_them) winner = 'Dark';
+                        else if (g.final_score_them > g.final_score_us) winner = 'Light';
                         else winner = 'Tie';
                       }
                       return (
                         <tr key={g.id}>
                           <td className="p-2 border-b">{g.game_date ? new Date(g.game_date).toLocaleDateString() : '-'}</td>
-                          <td className="p-2 border-b">{g.opponent || '-'}</td>
                           <td className="p-2 border-b">{g.final_score_us != null && g.final_score_them != null ? `${g.final_score_us} - ${g.final_score_them}` : '-'}</td>
                           <td className="p-2 border-b">{winner}</td>
                         </tr>
