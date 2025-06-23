@@ -20,6 +20,7 @@ const AnalyticsDashboard = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [tallyOpen, setTallyOpen] = useState(true);
   const [lineups, setLineups] = useState<Record<string, { Dark: string[]; Light: string[] }>>({});
+  const [spotlightOpen, setSpotlightOpen] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -279,18 +280,26 @@ const AnalyticsDashboard = () => {
             {/* 2. Player Spotlight Section */}
             {hasData ? (
               <section className="bg-white rounded-lg shadow p-6 mt-8">
-                <h2 className="text-xl font-bold mb-4">Player Spotlight (Last 5 Games)</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {Object.values(playerSpotlightStats).map((stat) => (
-                    <div key={stat.name} className="bg-gray-100 rounded p-4 text-center">
-                      <div className="text-lg font-semibold text-gray-800">{stat.name}</div>
-                      <div className="text-sm text-gray-700">Completions: {stat.completions}</div>
-                      <div className="text-sm text-gray-700">Turnovers: {stat.turnovers}</div>
-                      <div className="text-sm text-gray-700">Goals: {stat.goals}</div>
-                      <div className="text-sm text-gray-700">Assists: {stat.assists}</div>
-                    </div>
-                  ))}
-                </div>
+                <button
+                  className="w-full text-left font-bold text-xl mb-4 flex items-center justify-between"
+                  onClick={() => setSpotlightOpen((open) => !open)}
+                >
+                  Player Spotlight (Last 5 Games)
+                  <span>{spotlightOpen ? '▲' : '▼'}</span>
+                </button>
+                {spotlightOpen && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {Object.values(playerSpotlightStats).map((stat) => (
+                      <div key={stat.name} className="bg-gray-100 rounded p-4 text-center">
+                        <div className="text-lg font-semibold text-gray-800">{stat.name}</div>
+                        <div className="text-sm text-gray-700">Completions: {stat.completions}</div>
+                        <div className="text-sm text-gray-700">Turnovers: {stat.turnovers}</div>
+                        <div className="text-sm text-gray-700">Goals: {stat.goals}</div>
+                        <div className="text-sm text-gray-700">Assists: {stat.assists}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
             ) : (
               <section className="bg-white rounded-lg shadow p-6 mt-8 flex flex-col items-center">
@@ -380,6 +389,46 @@ const AnalyticsDashboard = () => {
                 <div className="text-lg text-gray-500">No chemistry data available yet.</div>
               </section>
             )}
+
+            {/* Game History Section */}
+            <section className="bg-white rounded-lg shadow p-6 mt-8">
+              <h2 className="text-xl font-bold mb-4">Game History</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full border text-center">
+                  <thead>
+                    <tr>
+                      <th className="p-2 border-b">Date</th>
+                      <th className="p-2 border-b">Opponent</th>
+                      <th className="p-2 border-b">Score</th>
+                      <th className="p-2 border-b">Winner</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...games].sort((a, b) => {
+                      const dateA = a.game_date ? new Date(a.game_date).getTime() : 0;
+                      const dateB = b.game_date ? new Date(b.game_date).getTime() : 0;
+                      return dateB - dateA;
+                    }).map((g) => {
+                      let winner = '-';
+                      if (g.final_score_us != null && g.final_score_them != null) {
+                        if (g.final_score_us > g.final_score_them) winner = 'Us';
+                        else if (g.final_score_them > g.final_score_us) winner = 'Them';
+                        else winner = 'Tie';
+                      }
+                      return (
+                        <tr key={g.id}>
+                          <td className="p-2 border-b">{g.game_date ? new Date(g.game_date).toLocaleDateString() : '-'}</td>
+                          <td className="p-2 border-b">{g.opponent || '-'}</td>
+                          <td className="p-2 border-b">{g.final_score_us != null && g.final_score_them != null ? `${g.final_score_us} - ${g.final_score_them}` : '-'}</td>
+                          <td className="p-2 border-b">{winner}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {games.length === 0 && <div className="text-gray-500 mt-2">No games played yet.</div>}
+              </div>
+            </section>
 
             {/* 5. Line Performance Analysis (placeholder) */}
             {hasData ? (
