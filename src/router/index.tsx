@@ -1,31 +1,47 @@
 import { createBrowserRouter } from "react-router-dom";
-import Home from "../pages/Home";
-import PlayerRoster from "../pages/PlayerRoster";
-import GameSetup from "../pages/GameSetup";
-import LiveGame from "../pages/LiveGame";
-import Stats from "../pages/Stats";
+import type { Session } from "@supabase/supabase-js";
 
-const router = createBrowserRouter([
-    {
-        path: "/",
-        element: <Home />,
-    },
-    {
-        path: "/roster",
-        element: <PlayerRoster />,
-    },
-    {
-        path: "/game/new",
-        element: <GameSetup />,
-    },
-    {
-        path: "/game/live/:id",
-        element: <LiveGame />,
-    },
-    {
-        path: "/stats",
-        element: <Stats />,
-    }
-]);
+import App from "../App";
+import AuthPage from "../pages/AuthPage";
+import Layout from "../components/Layout";
+import Home from "../pages/Home.tsx";
+import PrivateRoute from "./PrivateRoute";
+import AdminDashboard from "../pages/AdminDashboard";
+import TeamRoster from "../pages/TeamRoster";
 
-export default router; 
+export const createRouter = (session: Session | null) => {
+    return createBrowserRouter([
+        {
+            path: "/",
+            element: <App />,
+            children: [
+                {
+                    path: "auth",
+                    element: <AuthPage />,
+                },
+                {
+                    element: <PrivateRoute session={session} />,
+                    children: [
+                        {
+                            element: <Layout />,
+                            children: [
+                                {
+                                    path: "",
+                                    element: <Home />,
+                                },
+                                {
+                                    path: "admin",
+                                    element: <AdminDashboard />,
+                                },
+                                {
+                                    path: "admin/team/:teamId",
+                                    element: <TeamRoster />,
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        },
+    ]);
+}; 
