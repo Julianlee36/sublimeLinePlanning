@@ -267,6 +267,29 @@ const CreateTallyGame = () => {
         .from('lineups')
         .insert(lineupRows);
       if (lineupError) throw lineupError;
+
+      // Allocate tally points to winning team players
+      // --- Migration needed: create table tally_points (id uuid pk, game_id uuid, player_id uuid, created_at timestamptz default now())
+      let winner: 'Dark' | 'Light' | null = null;
+      if (scoreA > scoreB) winner = 'Dark';
+      else if (scoreB > scoreA) winner = 'Light';
+      if (winner) {
+        const winningPlayers = winner === 'Dark' ? teamA : teamB;
+        const tallyRows = winningPlayers.map((p) => ({
+          game_id: game.id,
+          player_id: p.id,
+        }));
+        if (tallyRows.length > 0) {
+          const { error: tallyError } = await supabase
+            .from('tally_points')
+            .insert(tallyRows);
+          if (tallyError) {
+            // If table does not exist, show a message
+            alert('Tally points table missing. Please run the migration to create tally_points table.');
+          }
+        }
+      }
+
       // Optionally: show confirmation or reset state
       setStep('teams');
       setEvents([]);
