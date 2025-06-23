@@ -213,7 +213,7 @@ const CreateTallyGame = () => {
         .single();
       if (gameError) throw gameError;
       // Save events
-      const eventRows = events.map((e, idx) => {
+      const eventRows = events.map((e) => {
         if (e.type === 'score') {
           return {
             game_id: game.id,
