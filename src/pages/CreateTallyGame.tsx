@@ -576,11 +576,11 @@ const CreateTallyGame = () => {
           <div className="mt-2 bg-gray-100 rounded p-2 max-h-64 overflow-y-auto text-sm">
             <div className="font-semibold mb-1">Event Log</div>
             {events.length === 0 && <div className="text-gray-400">No events yet.</div>}
-            {events.map((event, idx) => (
+            {events.map((event) => (
               <div
-                key={idx}
+                key={event.id}
                 className="mb-2 bg-white rounded shadow p-3 cursor-pointer hover:bg-blue-50 transition"
-                onClick={() => handleEditEvent(idx)}
+                onClick={() => handleEditEvent(event.id)}
               >
                 {event.type === 'score' && (
                   <span>
