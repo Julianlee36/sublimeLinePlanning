@@ -27,6 +27,7 @@ const CreateTallyGame = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   // Animation state for modal
   const [modalStepKey, setModalStepKey] = useState(0);
+  const [absentPlayers, setAbsentPlayers] = useState<Player[]>([]);
 
   // Timer effect
   useEffect(() => {
@@ -95,8 +96,11 @@ const CreateTallyGame = () => {
 
   // Autocomplete filter
   const [playerQuery, setPlayerQuery] = useState('');
-  const allPlayers = Array.from(new Map([...teamA, ...teamB, ...players].map(p => [p.id, p])).values());
-  const filteredPlayers = allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()));
+  const allPlayers = Array.from(new Map([...teamA, ...teamB, ...players].filter(p => !absentPlayers.some(a => a.id === p.id)).map(p => [p.id, p])).values());
+  const filteredPlayers = [
+    { id: '0', name: 'None' },
+    ...allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()))
+  ];
 
   // Modal close helper
   const closeModal = () => {
@@ -219,28 +223,26 @@ const CreateTallyGame = () => {
           <h3 className="text-lg font-semibold">Create Teams from Scratch</h3>
           {loading && <p>Loading players...</p>}
           {error && <p className="text-red-500">{error}</p>}
-
-          {/* Responsive layout: teams side by side on mobile, all columns on desktop */}
           <div className="flex flex-col md:grid md:grid-cols-3 gap-8 mt-4">
             {/* Teams side by side on mobile */}
             <div className="flex flex-row gap-4 md:flex-col md:col-span-2">
-              <div className="flex-1 bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-center mb-4">Team A</h4>
+              <div className="flex-1 bg-blue-50 p-4 rounded-lg border-2 border-blue-400">
+                <h4 className="font-semibold text-center mb-4 text-blue-700">Dark</h4>
                 <div className="space-y-3">
                   {teamA.map(player => (
                     <div key={player.id} className="bg-white p-3 rounded-lg shadow flex justify-between items-center">
-                      <span className="font-medium">{player.name}</span>
+                      <span className="font-medium text-blue-700">{player.name}</span>
                       <button onClick={() => handleMovePlayer(player, 'available')} className="w-8 h-8 font-bold bg-gray-400 text-white rounded-md hover:bg-gray-500 flex items-center justify-center">X</button>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="flex-1 bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-center mb-4">Team B</h4>
+              <div className="flex-1 bg-red-50 p-4 rounded-lg border-2 border-red-400">
+                <h4 className="font-semibold text-center mb-4 text-red-700">Light</h4>
                 <div className="space-y-3">
                   {teamB.map(player => (
                     <div key={player.id} className="bg-white p-3 rounded-lg shadow flex justify-between items-center">
-                      <span className="font-medium">{player.name}</span>
+                      <span className="font-medium text-red-700">{player.name}</span>
                       <button onClick={() => handleMovePlayer(player, 'available')} className="w-8 h-8 font-bold bg-gray-400 text-white rounded-md hover:bg-gray-500 flex items-center justify-center">X</button>
                     </div>
                   ))}
@@ -251,19 +253,19 @@ const CreateTallyGame = () => {
             <div className="bg-gray-50 p-4 rounded-lg md:col-span-1">
               <h4 className="font-semibold text-center mb-4">Available Players</h4>
               <div className="space-y-3">
-                {players.map(player => (
+                {players.filter(p => !absentPlayers.some(a => a.id === p.id)).map(player => (
                   <div key={player.id} className="bg-white p-3 rounded-lg shadow flex justify-between items-center">
                     <span className="font-medium">{player.name}</span>
                     <div className="flex gap-2">
-                      <button onClick={() => handleMovePlayer(player, 'A')} className="w-8 h-8 font-bold bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center">A</button>
-                      <button onClick={() => handleMovePlayer(player, 'B')} className="w-8 h-8 font-bold bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center justify-center">B</button>
+                      <button onClick={() => handleMovePlayer(player, 'A')} className="w-8 h-8 font-bold bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center">Dark</button>
+                      <button onClick={() => handleMovePlayer(player, 'B')} className="w-8 h-8 font-bold bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center justify-center">Light</button>
+                      <button onClick={() => setAbsentPlayers([...absentPlayers, player])} className="w-8 h-8 font-bold bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 flex items-center justify-center" title="Mark Absent">Absent</button>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-
           {/* Next button only if both teams have at least one player */}
           <div className="mt-6 flex justify-end">
             <button
@@ -351,13 +353,13 @@ const CreateTallyGame = () => {
           </div>
           {/* Scoreboard */}
           <div className="flex flex-row gap-2 justify-between items-center">
-            <div className="flex-1 bg-white p-2 rounded-lg shadow text-center">
-              <div className="font-bold text-md mb-1">Team A</div>
+            <div className="flex-1 bg-blue-50 p-2 rounded-lg shadow text-center border-2 border-blue-400">
+              <div className="font-bold text-md mb-1 text-blue-700">Dark</div>
               <div className="text-2xl font-mono mb-1">{scoreA}</div>
               <div className="text-xs text-gray-600">Defends: {defendsA} | Turnovers: {turnoversA}</div>
             </div>
-            <div className="flex-1 bg-white p-2 rounded-lg shadow text-center">
-              <div className="font-bold text-md mb-1">Team B</div>
+            <div className="flex-1 bg-red-50 p-2 rounded-lg shadow text-center border-2 border-red-400">
+              <div className="font-bold text-md mb-1 text-red-700">Light</div>
               <div className="text-2xl font-mono mb-1">{scoreB}</div>
               <div className="text-xs text-gray-600">Defends: {defendsB} | Turnovers: {turnoversB}</div>
             </div>
