@@ -28,6 +28,7 @@ const CreateTallyGame = () => {
   // Animation state for modal
   const [modalStepKey, setModalStepKey] = useState(0);
   const [absentPlayers, setAbsentPlayers] = useState<Player[]>([]);
+  const [editEventIdx, setEditEventIdx] = useState<number | null>(null);
 
   // Timer effect
   useEffect(() => {
@@ -129,34 +130,73 @@ const CreateTallyGame = () => {
     // Optionally: show summary, save, etc.
   };
 
-  // Handle modal step logic
+  // Open modal for editing an event
+  const handleEditEvent = (idx: number) => {
+    const event = events[idx];
+    if (!event) return;
+    if (event.type === 'score') {
+      setEventModal({ type: 'score', step: 0, data: { assister: event.assister } });
+      setEditEventIdx(idx);
+      setPlayerQuery('');
+    } else if (event.type === 'defend') {
+      setEventModal({ type: 'defend', step: 0, data: { player: event.player } });
+      setEditEventIdx(idx);
+      setPlayerQuery('');
+    } else if (event.type === 'turnover') {
+      setEventModal({ type: 'turnover', step: 0, data: { player: event.player, turnoverType: event.turnoverType } });
+      setEditEventIdx(idx);
+      setPlayerQuery('');
+    }
+  };
+
+  // When saving an event, replace if editing
   const handleModalNext = (value: any) => {
     if (!eventModal) return;
     const { type, step, data } = eventModal;
     if (type === 'score') {
       if (step === 0) {
-        // Pick assister
         setEventModal({ type, step: 1, data: { ...data, assister: value } });
-        setPlayerQuery(''); // Clear input for scorer selection
+        setPlayerQuery('');
       } else if (step === 1) {
-        // Pick scorer
-        setEvents([...events, { type: 'score', assister: data.assister, scorer: value, time: timer }]);
+        const newEvent = { type: 'score', assister: data.assister, scorer: value, time: timer };
+        if (editEventIdx !== null) {
+          const updated = [...events];
+          updated[editEventIdx] = newEvent;
+          setEvents(updated);
+          setEditEventIdx(null);
+        } else {
+          setEvents([...events, newEvent]);
+        }
         setScoreA(teamA.some(p => p.id === value.id) ? scoreA + 1 : scoreA);
         setScoreB(teamB.some(p => p.id === value.id) ? scoreB + 1 : scoreB);
         closeModal();
       }
     } else if (type === 'defend') {
-      setEvents([...events, { type: 'defend', player: value, time: timer }]);
+      const newEvent = { type: 'defend', player: value, time: timer };
+      if (editEventIdx !== null) {
+        const updated = [...events];
+        updated[editEventIdx] = newEvent;
+        setEvents(updated);
+        setEditEventIdx(null);
+      } else {
+        setEvents([...events, newEvent]);
+      }
       setDefendsA(teamA.some(p => p.id === value.id) ? defendsA + 1 : defendsA);
       setDefendsB(teamB.some(p => p.id === value.id) ? defendsB + 1 : defendsB);
       closeModal();
     } else if (type === 'turnover') {
       if (step === 0) {
-        // Pick player
         setEventModal({ type, step: 1, data: { ...data, player: value } });
       } else if (step === 1) {
-        // Pick type or skip
-        setEvents([...events, { type: 'turnover', player: data.player, turnoverType: value, time: timer }]);
+        const newEvent = { type: 'turnover', player: data.player, turnoverType: value, time: timer };
+        if (editEventIdx !== null) {
+          const updated = [...events];
+          updated[editEventIdx] = newEvent;
+          setEvents(updated);
+          setEditEventIdx(null);
+        } else {
+          setEvents([...events, newEvent]);
+        }
         setTurnoversA(teamA.some(p => p.id === data.player.id) ? turnoversA + 1 : turnoversA);
         setTurnoversB(teamB.some(p => p.id === data.player.id) ? turnoversB + 1 : turnoversB);
         closeModal();
@@ -371,24 +411,28 @@ const CreateTallyGame = () => {
             <button onClick={handleUndo} className="px-6 py-3 rounded bg-gray-400 text-white font-bold text-lg">Undo</button>
           </div>
           {/* Event log */}
-          <div className="mt-2 bg-gray-100 rounded p-2 max-h-32 overflow-y-auto text-sm">
+          <div className="mt-2 bg-gray-100 rounded p-2 max-h-64 overflow-y-auto text-sm">
             <div className="font-semibold mb-1">Event Log</div>
             {events.length === 0 && <div className="text-gray-400">No events yet.</div>}
-            {events.slice().reverse().map((event, idx) => (
-              <div key={idx} className="mb-1">
+            {events.map((event, idx) => (
+              <div
+                key={idx}
+                className="mb-2 bg-white rounded shadow p-3 cursor-pointer hover:bg-blue-50 transition"
+                onClick={() => handleEditEvent(idx)}
+              >
                 {event.type === 'score' && (
                   <span>
-                    <span className="font-bold text-green-700">Score</span>: {event.assister?.name !== 'None' ? event.assister?.name : 'No Assister'} → {event.scorer?.name !== 'None' ? event.scorer?.name : 'No Scorer'}
+                    <span className="font-bold text-green-700">Score</span>: {event.assister?.name} → {event.scorer?.name}
                   </span>
                 )}
                 {event.type === 'defend' && (
                   <span>
-                    <span className="font-bold text-blue-700">Defend</span>: {event.player?.name !== 'None' ? event.player?.name : 'No Player'}
+                    <span className="font-bold text-blue-700">Defend</span>: {event.player?.name}
                   </span>
                 )}
                 {event.type === 'turnover' && (
                   <span>
-                    <span className="font-bold text-red-700">Turnover</span>: {event.player?.name !== 'None' ? event.player?.name : 'No Player'}{event.turnoverType && event.turnoverType !== 'skip' ? ` (${event.turnoverType})` : ''}
+                    <span className="font-bold text-red-700">Turnover</span>: {event.player?.name}{event.turnoverType && event.turnoverType !== 'skip' ? ` (${event.turnoverType})` : ''}
                   </span>
                 )}
               </div>
