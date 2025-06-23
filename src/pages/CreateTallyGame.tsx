@@ -104,44 +104,51 @@ const CreateTallyGame = () => {
           <h3 className="text-lg font-semibold">Create Teams from Scratch</h3>
           {loading && <p>Loading players...</p>}
           {error && <p className="text-red-500">{error}</p>}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-center mb-4">Available Players</h4>
-                <div className="space-y-3">
-                    {players.map(player => (
-                        <div key={player.id} className="bg-white p-3 rounded-lg shadow flex justify-between items-center">
-                            <span className="font-medium">{player.name}</span>
-                            <div className="flex gap-2">
-                                <button onClick={() => handleMovePlayer(player, 'A')} className="w-8 h-8 font-bold bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center">A</button>
-                                <button onClick={() => handleMovePlayer(player, 'B')} className="w-8 h-8 font-bold bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center justify-center">B</button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
+
+          {/* Responsive layout: teams side by side on mobile, all columns on desktop */}
+          <div className="flex flex-col md:grid md:grid-cols-3 gap-8 mt-4">
+            {/* Teams side by side on mobile */}
+            <div className="flex flex-row gap-4 md:flex-col md:col-span-2">
+              <div className="flex-1 bg-gray-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-center mb-4">Team A</h4>
                 <div className="space-y-3">
-                    {teamA.map(player => (
-                        <div key={player.id} className="bg-white p-3 rounded-lg shadow flex justify-between items-center">
-                            <span className="font-medium">{player.name}</span>
-                            <button onClick={() => handleMovePlayer(player, 'available')} className="w-8 h-8 font-bold bg-gray-400 text-white rounded-md hover:bg-gray-500 flex items-center justify-center">X</button>
-                        </div>
-                    ))}
+                  {teamA.map(player => (
+                    <div key={player.id} className="bg-white p-3 rounded-lg shadow flex justify-between items-center">
+                      <span className="font-medium">{player.name}</span>
+                      <button onClick={() => handleMovePlayer(player, 'available')} className="w-8 h-8 font-bold bg-gray-400 text-white rounded-md hover:bg-gray-500 flex items-center justify-center">X</button>
+                    </div>
+                  ))}
                 </div>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
+              </div>
+              <div className="flex-1 bg-gray-50 p-4 rounded-lg">
                 <h4 className="font-semibold text-center mb-4">Team B</h4>
                 <div className="space-y-3">
-                    {teamB.map(player => (
-                        <div key={player.id} className="bg-white p-3 rounded-lg shadow flex justify-between items-center">
-                            <span className="font-medium">{player.name}</span>
-                            <button onClick={() => handleMovePlayer(player, 'available')} className="w-8 h-8 font-bold bg-gray-400 text-white rounded-md hover:bg-gray-500 flex items-center justify-center">X</button>
-                        </div>
-                    ))}
+                  {teamB.map(player => (
+                    <div key={player.id} className="bg-white p-3 rounded-lg shadow flex justify-between items-center">
+                      <span className="font-medium">{player.name}</span>
+                      <button onClick={() => handleMovePlayer(player, 'available')} className="w-8 h-8 font-bold bg-gray-400 text-white rounded-md hover:bg-gray-500 flex items-center justify-center">X</button>
+                    </div>
+                  ))}
                 </div>
+              </div>
+            </div>
+            {/* Available players below on mobile, right column on desktop */}
+            <div className="bg-gray-50 p-4 rounded-lg md:col-span-1">
+              <h4 className="font-semibold text-center mb-4">Available Players</h4>
+              <div className="space-y-3">
+                {players.map(player => (
+                  <div key={player.id} className="bg-white p-3 rounded-lg shadow flex justify-between items-center">
+                    <span className="font-medium">{player.name}</span>
+                    <div className="flex gap-2">
+                      <button onClick={() => handleMovePlayer(player, 'A')} className="w-8 h-8 font-bold bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center">A</button>
+                      <button onClick={() => handleMovePlayer(player, 'B')} className="w-8 h-8 font-bold bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center justify-center">B</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
+
           {/* Next button only if both teams have at least one player */}
           <div className="mt-6 flex justify-end">
             <button
