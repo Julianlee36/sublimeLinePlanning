@@ -227,7 +227,7 @@ const CreateTallyGame = () => {
       >
         &larr; Back
       </button>
-      <h1 className="text-3xl font-bold">Create a New Tally Game</h1>
+      {/* <h1 className="text-3xl font-bold">Create a New Tally Game</h1> */}
       {/* Only show method selection if not chosen yet */}
       {teamCreationMethod === null && (
         <div className="mt-8">
