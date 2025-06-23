@@ -8,12 +8,14 @@ import Home from "../pages/Home.tsx";
 import PrivateRoute from "./PrivateRoute";
 import AdminDashboard from "../pages/AdminDashboard";
 import TeamRoster from "../pages/TeamRoster";
+import ErrorPage from "../pages/ErrorPage";
 
 export const createRouter = (session: Session | null) => {
     return createBrowserRouter([
         {
             path: "/",
             element: <App />,
+            errorElement: <ErrorPage />,
             children: [
                 {
                     path: "auth",
