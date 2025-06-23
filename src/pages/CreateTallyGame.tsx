@@ -24,7 +24,6 @@ const CreateTallyGame = () => {
   const [defendsB, setDefendsB] = useState<number>(0);
   const [turnoversA, setTurnoversA] = useState<number>(0);
   const [turnoversB, setTurnoversB] = useState<number>(0);
-  // const [eventModal, setEventModal] = useState<null | { type: 'score' | 'defend' | 'turnover', step: number, data: any }>(null);
   const [events, setEvents] = useState<any[]>([]); // {type, team, player(s), time, extra}
   // const [undoStack, setUndoStack] = useState<any[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -126,14 +125,6 @@ const CreateTallyGame = () => {
     }
   };
 
-  // Autocomplete filter
-  // const [playerQuery, setPlayerQuery] = useState('');
-  // const allPlayers = Array.from(new Map([...teamA, ...teamB, ...players].filter(p => !absentPlayers.some(a => a.id === p.id)).map(p => [p.id, p])).values());
-  // const filteredPlayers =
-  //   eventModal
-  //     ? allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()))
-  //     : allPlayers.filter(p => p.name.toLowerCase().includes(playerQuery.toLowerCase()));
-
   // Modal close helper
   // const closeModal = () => { /* ... */ };
 
@@ -151,14 +142,6 @@ const CreateTallyGame = () => {
 
   // When saving an event, replace if editing
   // const handleModalNext = (value: any) => { /* ... */ };
-
-  // Focus input and animate on modal step change
-  useEffect(() => {
-    if (eventModal && inputRef.current) {
-      inputRef.current.focus();
-    }
-    // setModalStepKey(prev => prev + 1); // triggers animation
-  }, [eventModal]);
 
   return (
     <div className="min-h-screen bg-background py-8">
@@ -189,4 +172,4 @@ export default CreateTallyGame;
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
 }
-*/ 
+*/
