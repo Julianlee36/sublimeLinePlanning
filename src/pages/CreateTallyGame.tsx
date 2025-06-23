@@ -445,6 +445,26 @@ const CreateTallyGame = () => {
                   </div>
                 ))}
               </div>
+              {/* Absent players section */}
+              {absentPlayers.length > 0 && (
+                <div className="mt-8">
+                  <h4 className="font-semibold text-center mb-4 text-gray-500">Absent Players</h4>
+                  <div className="space-y-3">
+                    {absentPlayers.map(player => (
+                      <div key={player.id} className="bg-gray-200 p-3 rounded-lg shadow flex justify-between items-center">
+                        <span className="font-medium text-gray-500">{player.name}</span>
+                        <button
+                          onClick={() => setAbsentPlayers(absentPlayers.filter(a => a.id !== player.id))}
+                          className="w-8 h-8 font-bold bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center justify-center"
+                          title="Return to Player Pool"
+                        >
+                          +
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           {/* Next button only if both teams have at least one player */}
