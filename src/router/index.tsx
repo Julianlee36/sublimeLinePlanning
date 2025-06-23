@@ -9,6 +9,7 @@ import PrivateRoute from "./PrivateRoute";
 import AdminDashboard from "../pages/AdminDashboard";
 import TeamRoster from "../pages/TeamRoster";
 import ErrorPage from "../pages/ErrorPage";
+import AuthRedirect from "./AuthRedirect.tsx";
 
 export const createRouter = (session: Session | null) => {
     return createBrowserRouter([
@@ -18,8 +19,13 @@ export const createRouter = (session: Session | null) => {
             errorElement: <ErrorPage />,
             children: [
                 {
-                    path: "auth",
-                    element: <AuthPage />,
+                    element: <AuthRedirect session={session} />,
+                    children: [
+                        {
+                            path: "auth",
+                            element: <AuthPage />,
+                        },
+                    ],
                 },
                 {
                     element: <PrivateRoute session={session} />,

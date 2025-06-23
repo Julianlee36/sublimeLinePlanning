@@ -15,17 +15,17 @@ const Layout = () => {
 
     return (
         <div>
-            <nav className="bg-gray-800 text-white p-4">
-                <div className="container mx-auto flex justify-between items-center">
-                    <Link to="/" className="font-bold text-xl">Stats App</Link>
-                    <div className="flex gap-4">
-                        <Link to="/roster" className="hover:underline">Roster</Link>
-                        <Link to="/game/new" className="hover:underline">New Game</Link>
-                        <Link to="/stats" className="hover:underline">Stats</Link>
-                        <button onClick={handleLogout} className="bg-red-500 hover:bg-red-600 px-3 py-1 rounded">Logout</button>
-                    </div>
+            <header className="bg-white shadow">
+                <div className="container mx-auto px-4 py-6 flex justify-between items-center">
+                    <Link to="/" className="text-2xl font-bold text-gray-800">Ultimate Stats</Link>
+                    <button 
+                        onClick={handleLogout} 
+                        className="bg-red-500 text-white font-bold py-2 px-4 rounded hover:bg-red-700 transition duration-300"
+                    >
+                        Logout
+                    </button>
                 </div>
-            </nav>
+            </header>
             <main className="p-4">
                 <Outlet />
             </main>
