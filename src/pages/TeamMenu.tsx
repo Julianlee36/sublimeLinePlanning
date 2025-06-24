@@ -14,7 +14,6 @@ const TeamMenu = () => {
             className="block bg-blue-50 rounded-xl p-6 hover:bg-blue-100 transition"
           >
             <h2 className="text-2xl font-bold mb-2 text-blue-900">Line Management</h2>
-            <p className="text-blue-700">Manage, create, and edit lines for your team</p>
           </Link>
           {/* Play a Tally Game */}
           <Link
