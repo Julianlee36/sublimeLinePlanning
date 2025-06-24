@@ -341,18 +341,22 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({ options, value, i
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => { if (inputRef.current) inputRef.current.focus(); }, []);
 
-  // If the user selects a player, show their name in the input. If the user types, show the input.
-  // We'll treat "input" as the source of truth unless a player is selected and input matches their name.
-  const displayValue = value && input === value.name ? value.name : input;
+  // Always use the input state for the input value
+  const displayValue = input;
 
-  // When the user types, clear the selection if it doesn't match the selected player's name
+  // When the user types, always clear the selection
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    onInput(newValue);
+    onInput(e.target.value);
     setHighlight(0);
-    if (value && newValue !== value.name) {
-      onSelect(null as any); // Clear selection if input doesn't match selected player's name
+    if (value) {
+      onSelect(null as any); // Always clear selection on typing
     }
+  };
+
+  // When a player is selected, set the input to their name and set the selected value
+  const handleSelect = (player: Player) => {
+    onInput(player.name);
+    onSelect(player);
   };
 
   return (
@@ -366,7 +370,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({ options, value, i
         onKeyDown={e => {
           if (e.key === 'ArrowDown') setHighlight(h => Math.min(h + 1, options.length - 1));
           if (e.key === 'ArrowUp') setHighlight(h => Math.max(h - 1, 0));
-          if (e.key === 'Enter') onSelect(options[highlight]);
+          if (e.key === 'Enter') handleSelect(options[highlight]);
         }}
       />
       <ul className="max-h-40 overflow-y-auto bg-white rounded-xl border border-gray-200">
@@ -375,7 +379,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({ options, value, i
             key={p.id}
             className={`px-3 py-2 cursor-pointer ${i === highlight ? 'bg-blue-100' : ''}${value && value.id === p.id ? ' font-bold' : ''}`}
             onMouseEnter={() => setHighlight(i)}
-            onClick={() => onSelect(p)}
+            onClick={() => handleSelect(p)}
           >
             {p.name}
           </li>
