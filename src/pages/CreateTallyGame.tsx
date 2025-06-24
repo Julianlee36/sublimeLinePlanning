@@ -577,6 +577,18 @@ const CreateTallyGame = () => {
         )}
         {step === 'game' && (
           <div className="bg-white rounded-2xl shadow-soft p-4 mb-8">
+            {/* Game Timer */}
+            <div className="flex items-center justify-center mb-6">
+              <span className="text-2xl font-mono font-bold bg-gray-100 rounded px-4 py-2">
+                {String(Math.floor(timer / 60)).padStart(2, '0')}:{String(timer % 60).padStart(2, '0')}
+              </span>
+              <button
+                className={`ml-4 px-4 py-2 rounded font-bold shadow ${timerActive ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'bg-green-500 text-white hover:bg-green-600'}`}
+                onClick={() => setTimerActive(!timerActive)}
+              >
+                {timerActive ? 'Pause' : 'Start'}
+              </button>
+            </div>
             <TallyGameEventRecorder
               presentPlayers={[
                 ...teamA.map(p => ({ id: p.id, name: p.name, team: 'A' as const })),
