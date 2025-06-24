@@ -120,10 +120,20 @@ const CreateTallyGame = () => {
   // Timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    if (step === 'game' && timerActive && (duration === 0 || timer < duration * 60)) {
-      interval = setInterval(() => {
-        setTimer(t => t + 1);
-      }, 1000);
+    if (step === 'game' && timerActive) {
+      if (duration > 0) {
+        // Countdown
+        if (timer > 0) {
+          interval = setInterval(() => {
+            setTimer(t => (t > 0 ? t - 1 : 0));
+          }, 1000);
+        }
+      } else {
+        // Count up
+        interval = setInterval(() => {
+          setTimer(t => t + 1);
+        }, 1000);
+      }
     }
     return () => {
       if (interval) clearInterval(interval);
@@ -568,9 +578,17 @@ const CreateTallyGame = () => {
             <div className="mt-8 flex justify-end">
               <button
                 className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition"
-                onClick={() => setStep('game')}
+                onClick={() => {
+                  if (duration > 0) {
+                    setTimer(duration * 60);
+                  } else {
+                    setTimer(0);
+                  }
+                  setTimerActive(true);
+                  setStep('game');
+                }}
               >
-                Next: Review & Start Game
+                Start Game
               </button>
             </div>
           </div>
