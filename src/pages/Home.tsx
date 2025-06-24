@@ -7,6 +7,7 @@ const Home = () => {
     const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [userName, setUserName] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchTeams = async () => {
@@ -27,11 +28,27 @@ const Home = () => {
         fetchTeams();
     }, []);
 
+    useEffect(() => {
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                let firstName = null;
+                if (user.user_metadata?.full_name) {
+                    firstName = user.user_metadata.full_name.split(' ')[0];
+                } else if (user.email) {
+                    firstName = user.email.split('@')[0];
+                }
+                setUserName(firstName);
+            }
+        };
+        fetchUser();
+    }, []);
+
     return (
         <div className="bg-background flex items-center justify-center min-h-screen -m-4">
             <div className="text-center p-10 w-full max-w-lg space-y-12">
                 <h1 className="text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
-                    Welcome to Ultimate Stats
+                    {`Welcome${userName ? ", " + userName : ", there"}!`}
                 </h1>
                 <p className="text-xl text-gray-600 mb-10">
                     Manage your teams, track games, and view detailed stats with ease.
