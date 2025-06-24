@@ -49,7 +49,7 @@ export const CardStack: React.FC<CardStackProps> = ({ cards, onSelect, selectedI
           tabIndex={0}
           role="button"
           aria-label="Expand card stack"
-          onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && handleToggle()}
+          onKeyDown={(e: React.KeyboardEvent) => (e.key === 'Enter' || e.key === ' ') && handleToggle()}
         >
           <div className="relative" style={{ height: CARD_HEIGHT + 12 }}>
             {/* Stack hint: show 2-3 offset cards behind */}
@@ -136,7 +136,7 @@ export const CardStack: React.FC<CardStackProps> = ({ cards, onSelect, selectedI
                 tabIndex={0}
                 role="button"
                 aria-label={`Select ${card.title}`}
-                onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && handleCardClick(card.id)}
+                onKeyDown={(e: React.KeyboardEvent) => (e.key === 'Enter' || e.key === ' ') && handleCardClick(card.id)}
               >
                 <div>
                   {card.title}
