@@ -45,6 +45,8 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
   const [autocomplete, setAutocomplete] = useState({ input: '', options: presentPlayers, selected: null as Player | null });
   const [turnoverType, setTurnoverType] = useState<TurnoverType>('Throwing');
   const modalRef = useRef<HTMLDivElement>(null);
+  // Add state for recent players
+  const [recentPlayers, setRecentPlayers] = useState<Player[]>([]);
 
   // Persist state in localStorage
   useEffect(() => {
@@ -91,6 +93,7 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
     if (step === 0) {
       setModal(m => m && { ...m, step: 1, data: { assister: value } });
       setAutocomplete({ input: '', options: presentPlayers, selected: null });
+      if (value) setRecentPlayers(r => [value, ...r.filter(p => p.id !== value.id)].slice(0, 5));
     } else if (step === 1) {
       const assister = modal?.data.assister || null;
       const scorer = value;
@@ -108,6 +111,7 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
       setEventLog(log => [...log, event]);
       if (team === 'A') setScoreA(s => s + 1);
       else setScoreB(s => s + 1);
+      if (value) setRecentPlayers(r => [value, ...r.filter(p => p.id !== value.id)].slice(0, 5));
       closeModal();
     }
   };
@@ -125,6 +129,7 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
     setEventLog(log => [...log, event]);
     if (team === 'A') setDefendsA(d => d + 1);
     else setDefendsB(d => d + 1);
+    setRecentPlayers(r => [player, ...r.filter(p => p.id !== player.id)].slice(0, 5));
     closeModal();
   };
 
@@ -132,6 +137,7 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
   const handleTurnoverStep = (step: number, value: any) => {
     if (step === 0) {
       setModal(m => m && { ...m, step: 1, data: { player: value } });
+      if (value) setRecentPlayers(r => [value, ...r.filter(p => p.id !== value.id)].slice(0, 5));
     } else if (step === 1) {
       const player = modal?.data.player;
       const type = value as TurnoverType;
@@ -244,6 +250,7 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
                   input={autocomplete.input}
                   onInput={input => setAutocomplete(a => ({ ...a, input }))}
                   onSelect={player => handleScoreStep(0, player)}
+                  recentPlayers={recentPlayers}
                 />
               </>
             )}
@@ -256,6 +263,7 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
                   input={autocomplete.input}
                   onInput={input => setAutocomplete(a => ({ ...a, input }))}
                   onSelect={player => handleScoreStep(1, player)}
+                  recentPlayers={recentPlayers}
                 />
               </>
             )}
@@ -269,6 +277,7 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
                   input={autocomplete.input}
                   onInput={input => setAutocomplete(a => ({ ...a, input }))}
                   onSelect={player => handleDefend(player)}
+                  recentPlayers={recentPlayers}
                 />
               </>
             )}
@@ -282,6 +291,7 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
                   input={autocomplete.input}
                   onInput={input => setAutocomplete(a => ({ ...a, input }))}
                   onSelect={player => handleTurnoverStep(0, player)}
+                  recentPlayers={recentPlayers}
                 />
               </>
             )}
@@ -360,8 +370,9 @@ interface AutocompleteInputProps {
   input: string;
   onInput: (input: string) => void;
   onSelect: (player: Player) => void;
+  recentPlayers: Player[];
 }
-const AutocompleteInput: React.FC<AutocompleteInputProps> = ({ options, value, input, onInput, onSelect }) => {
+const AutocompleteInput: React.FC<AutocompleteInputProps> = ({ options, value, input, onInput, onSelect, recentPlayers }) => {
   const [highlight, setHighlight] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => { if (inputRef.current) inputRef.current.focus(); }, []);
@@ -384,21 +395,61 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({ options, value, i
     onSelect(player);
   };
 
+  // Scroll input into view on focus (mobile)
+  const handleFocus = () => {
+    if (inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 200);
+    }
+  };
+
+  // Dismiss keyboard on click outside
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (inputRef.current && !inputRef.current.contains(e.target as Node)) {
+        inputRef.current.blur();
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
   return (
-    <div>
-      <input
-        ref={inputRef}
-        className="w-full p-3 border border-gray-300 rounded-xl mb-2"
-        placeholder="Type to search..."
-        value={displayValue}
-        onChange={handleInputChange}
-        onKeyDown={e => {
-          if (e.key === 'ArrowDown') setHighlight(h => Math.min(h + 1, options.length - 1));
-          if (e.key === 'ArrowUp') setHighlight(h => Math.max(h - 1, 0));
-          if (e.key === 'Enter') handleSelect(options[highlight]);
-        }}
-      />
-      <ul className="max-h-40 overflow-y-auto bg-white rounded-xl border border-gray-200">
+    <div className="w-full">
+      {/* Sticky search input */}
+      <div className="sticky top-0 z-10 bg-white pb-2">
+        <input
+          ref={inputRef}
+          className="w-full p-3 border border-gray-300 rounded-xl mb-2"
+          placeholder="Type to search..."
+          value={displayValue}
+          onChange={handleInputChange}
+          onFocus={handleFocus}
+          onKeyDown={e => {
+            if (e.key === 'ArrowDown') setHighlight(h => Math.min(h + 1, options.length - 1));
+            if (e.key === 'ArrowUp') setHighlight(h => Math.max(h - 1, 0));
+            if (e.key === 'Enter') handleSelect(options[highlight]);
+          }}
+        />
+        {/* Quick-select recent players */}
+        {recentPlayers && recentPlayers.length > 0 && (
+          <div className="flex gap-2 mb-2 overflow-x-auto">
+            {recentPlayers.map((p) => (
+              <button
+                key={p.id}
+                className="px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold text-sm shadow hover:bg-blue-200 transition whitespace-nowrap"
+                onClick={() => handleSelect(p)}
+                type="button"
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {/* Scrollable player list */}
+      <ul className="max-h-[50vh] overflow-y-auto bg-white rounded-xl border border-gray-200">
         {options.map((p, i) => (
           <li
             key={p.id}
