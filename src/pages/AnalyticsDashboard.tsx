@@ -104,9 +104,6 @@ const AnalyticsDashboard = () => {
     };
   }, [last5Events]);
 
-  // Trend indicators (compare last 5 vs previous 5)
-  const prev5Games = useMemo(() => games.slice(5, 10), [games]);
-
   // 2. Player Spotlight
   const playerStats = useMemo(() => {
     // For each player, calculate completions, turnovers, goals, assists
