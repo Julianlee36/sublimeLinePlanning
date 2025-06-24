@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 
 const AuthPage = () => {
     return (
-        <div className="relative min-h-screen flex items-center justify-center bg-background overflow-hidden">
+        <div className="relative w-screen h-screen flex items-center justify-center bg-background overflow-hidden">
             {/* Video Background */}
             <video
                 className="bg-video fixed inset-0 w-full h-full object-cover z-0"
