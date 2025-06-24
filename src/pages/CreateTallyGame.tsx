@@ -60,6 +60,8 @@ const CreateTallyGame = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   // Add state to hold event log from the event recorder
   const [tallyEventLog, setTallyEventLog] = useState<TallyEvent[]>([]);
+  const [showEndGameModal, setShowEndGameModal] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   // Restore state from localStorage on mount
   useEffect(() => {
@@ -321,6 +323,35 @@ const CreateTallyGame = () => {
     }
   };
 
+  const handleDiscardGame = () => {
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    setTeamCreationMethod(null);
+    setPlayers([]);
+    setTeamA([]);
+    setTeamB([]);
+    setStep('teams');
+    setDuration(0);
+    setScoreCap(0);
+    setTimer(0);
+    setTimerActive(false);
+    setScoreA(0);
+    setScoreB(0);
+    setDefendsA(0);
+    setDefendsB(0);
+    setTurnoversA(0);
+    setTurnoversB(0);
+    setEvents([]);
+    setAbsentPlayers([]);
+    setSelectedTeamId(null);
+    setSelectedLineId(null);
+    setTeams([]);
+    setLines([]);
+    setTallyEventLog([]);
+    setShowDiscardConfirm(false);
+    setShowEndGameModal(false);
+    alert('Game discarded.');
+  };
+
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-3xl mx-auto p-4 space-y-10">
@@ -570,7 +601,6 @@ const CreateTallyGame = () => {
               teamBName="Light"
               onUpdateTallies={(tallies, eventLog) => {
                 setTallyEventLog(eventLog);
-                // Optionally, update local score/defend/turnover state if you want to keep them in sync
                 setScoreA(tallies.scoreA);
                 setScoreB(tallies.scoreB);
                 setDefendsA(tallies.defendsA);
@@ -579,16 +609,69 @@ const CreateTallyGame = () => {
                 setTurnoversB(tallies.turnoversB);
               }}
             />
-            <div className="mt-8 flex justify-end">
+            <div className="mt-8 flex justify-end gap-4">
               <button
-                className="px-6 py-3 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition disabled:opacity-50"
+                className="px-6 py-3 rounded-xl bg-gray-400 text-white font-bold hover:bg-gray-500 transition disabled:opacity-50"
                 disabled={isSubmitting}
-                onClick={handleSubmitGame}
+                onClick={() => setShowEndGameModal(true)}
               >
-                {isSubmitting ? 'Saving...' : 'End Game & Save'}
+                End Game
               </button>
             </div>
             {submitError && <div className="text-red-500 mt-4">{submitError}</div>}
+          </div>
+        )}
+        {/* End Game Modal */}
+        {showEndGameModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full">
+              <h2 className="text-xl font-bold mb-4">End Game</h2>
+              <p className="mb-6">Would you like to save or discard this game?</p>
+              <div className="flex gap-4 justify-end">
+                <button
+                  className="px-4 py-2 rounded bg-green-600 text-white font-bold hover:bg-green-700"
+                  onClick={() => { setShowEndGameModal(false); handleSubmitGame(); }}
+                  disabled={isSubmitting}
+                >
+                  Save Game
+                </button>
+                <button
+                  className="px-4 py-2 rounded bg-red-600 text-white font-bold hover:bg-red-700"
+                  onClick={() => { setShowEndGameModal(false); setShowDiscardConfirm(true); }}
+                >
+                  Discard Game
+                </button>
+                <button
+                  className="px-4 py-2 rounded bg-gray-300 text-gray-800 font-bold hover:bg-gray-400"
+                  onClick={() => setShowEndGameModal(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Discard Confirmation Modal */}
+        {showDiscardConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+            <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full">
+              <h2 className="text-xl font-bold mb-4">Discard Game?</h2>
+              <p className="mb-6">Are you sure you want to discard this game? This cannot be undone.</p>
+              <div className="flex gap-4 justify-end">
+                <button
+                  className="px-4 py-2 rounded bg-red-600 text-white font-bold hover:bg-red-700"
+                  onClick={handleDiscardGame}
+                >
+                  Yes, Discard
+                </button>
+                <button
+                  className="px-4 py-2 rounded bg-gray-300 text-gray-800 font-bold hover:bg-gray-400"
+                  onClick={() => setShowDiscardConfirm(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

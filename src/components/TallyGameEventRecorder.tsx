@@ -171,8 +171,9 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
 
   // --- Autocomplete Logic ---
   const getAutocompleteOptions = (input: string) => {
+    const normalizedInput = input.trim().toLowerCase().normalize();
     const filtered = presentPlayers.filter(p =>
-      p.name.toLowerCase().includes(input.toLowerCase())
+      p.name.trim().toLowerCase().normalize().includes(normalizedInput)
     );
     return filtered;
   };
