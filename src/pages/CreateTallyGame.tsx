@@ -628,11 +628,9 @@ const CreateTallyGame = () => {
                 {timerActive ? 'Pause' : 'Start'}
               </button>
             </div>
+            {/* Pass all non-absent players as presentPlayers, so any can score or assist. The scorer is the one who gets the goal and their team gets the point. */}
             <TallyGameEventRecorder
-              presentPlayers={[
-                ...teamA.map(p => ({ id: p.id, name: p.name, team: 'A' as const })),
-                ...teamB.map(p => ({ id: p.id, name: p.name, team: 'B' as const })),
-              ].filter(p => !absentPlayers.some(a => a.id === p.id))}
+              presentPlayers={players.filter(p => !absentPlayers.some(a => a.id === p.id)).map(p => ({ id: p.id, name: p.name, team: teamA.some(a => a.id === p.id) ? 'A' : 'B' }))}
               teamAName="Dark"
               teamBName="Light"
               onUpdateTallies={(tallies, eventLog) => {
