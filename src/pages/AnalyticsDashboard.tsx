@@ -18,9 +18,10 @@ const AnalyticsDashboard = () => {
   const [games, setGames] = useState<Game[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  const [tallyOpen, setTallyOpen] = useState(true);
+  const [tallyOpen, setTallyOpen] = useState(false);
   const [lineups, setLineups] = useState<Record<string, { Dark: string[]; Light: string[] }>>({});
-  const [spotlightOpen, setSpotlightOpen] = useState(true);
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
+  const [chemistryOpen, setChemistryOpen] = useState(false);
 
   // Fetch data for dashboard
   const fetchData = async () => {
@@ -247,37 +248,7 @@ const AnalyticsDashboard = () => {
         {!loading && !error && (
           <>
             {/* 1. Top-Level Metrics Section */}
-            {hasData ? (
-              <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-                  <h2 className="text-lg font-semibold mb-2">Win/Loss (Last 5 Games)</h2>
-                  <div className="text-3xl font-bold text-green-600">{winLoss.wins}-{winLoss.losses}</div>
-                  <div className="text-sm text-gray-500 mt-2">
-                    {completionStats.completionPct > prevCompletionStats.completionPct ? 'Trending Up' : 'Trending Down'}
-                  </div>
-                </div>
-                <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-                  <h2 className="text-lg font-semibold mb-2">Team Completion %</h2>
-                  <div className="text-3xl font-bold text-blue-600">{completionStats.completionPct}%</div>
-                  <div className="text-sm text-gray-500 mt-2">
-                    {completionStats.completionPct - prevCompletionStats.completionPct >= 0 ? '+' : ''}
-                    {completionStats.completionPct - prevCompletionStats.completionPct}% vs previous
-                  </div>
-                </div>
-                <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-                  <h2 className="text-lg font-semibold mb-2">Turnover Rate</h2>
-                  <div className="text-3xl font-bold text-red-600">{completionStats.turnoverRate}%</div>
-                  <div className="text-sm text-gray-500 mt-2">
-                    {completionStats.turnoverRate - prevCompletionStats.turnoverRate >= 0 ? '+' : ''}
-                    {completionStats.turnoverRate - prevCompletionStats.turnoverRate}% vs previous
-                  </div>
-                </div>
-              </section>
-            ) : (
-              <section className="bg-white rounded-lg shadow p-6 flex flex-col items-center">
-                <div className="text-lg text-gray-500">No team stats available yet.</div>
-              </section>
-            )}
+            {/* removed top-level metrics section as requested */}
 
             {/* 2. Player Spotlight Section */}
             {hasData ? (
@@ -351,40 +322,48 @@ const AnalyticsDashboard = () => {
             {/* 4. Chemistry Heat Map */}
             {hasData ? (
               <section className="bg-white rounded-lg shadow p-6 mt-8">
-                <h2 className="text-xl font-bold mb-4">Chemistry Heat Map</h2>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full border text-center">
-                    <thead>
-                      <tr>
-                        <th className="p-2 border-b"></th>
-                        {players.map((p) => (
-                          <th key={p.id} className="p-2 border-b">{p.name}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {players.map((rowP) => (
-                        <tr key={rowP.id}>
-                          <td className="p-2 border-b font-semibold">{rowP.name}</td>
-                          {players.map((colP) => {
-                            if (rowP.id === colP.id) {
-                              return <td key={colP.id} className="bg-gray-100">-</td>;
-                            }
-                            const value = chemistryMatrix[rowP.id][colP.id];
-                            let color = '';
-                            if (value >= 10) color = 'bg-green-200';
-                            else if (value >= 5) color = 'bg-yellow-200';
-                            else if (value > 0) color = 'bg-red-200';
-                            return (
-                              <td key={colP.id} className={`${color} cursor-pointer`}>{value}</td>
-                            );
-                          })}
+                <button
+                  className="w-full text-left font-bold text-xl mb-4 flex items-center justify-between"
+                  onClick={() => setChemistryOpen((open) => !open)}
+                >
+                  Chemistry Heat Map
+                  <span>{chemistryOpen ? '▲' : '▼'}</span>
+                </button>
+                {chemistryOpen && (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full border text-center">
+                      <thead>
+                        <tr>
+                          <th className="p-2 border-b"></th>
+                          {players.map((p) => (
+                            <th key={p.id} className="p-2 border-b">{p.name}</th>
+                          ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <div className="mt-2 text-sm text-gray-500">Top 3 partnerships highlighted</div>
-                </div>
+                      </thead>
+                      <tbody>
+                        {players.map((rowP) => (
+                          <tr key={rowP.id}>
+                            <td className="p-2 border-b font-semibold">{rowP.name}</td>
+                            {players.map((colP) => {
+                              if (rowP.id === colP.id) {
+                                return <td key={colP.id} className="bg-gray-100">-</td>;
+                              }
+                              const value = chemistryMatrix[rowP.id][colP.id];
+                              let color = '';
+                              if (value >= 10) color = 'bg-green-200';
+                              else if (value >= 5) color = 'bg-yellow-200';
+                              else if (value > 0) color = 'bg-red-200';
+                              return (
+                                <td key={colP.id} className={`${color} cursor-pointer`}>{value}</td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div className="mt-2 text-sm text-gray-500">Top 3 partnerships highlighted</div>
+                  </div>
+                )}
               </section>
             ) : (
               <section className="bg-white rounded-lg shadow p-6 mt-8 flex flex-col items-center">
