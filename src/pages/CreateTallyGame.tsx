@@ -432,27 +432,6 @@ const CreateTallyGame = () => {
           <div className="bg-white rounded-2xl shadow-soft p-8 mb-8">
             <h2 className="text-2xl font-bold mb-4">Assign Players to Sub-Teams</h2>
             <div className="flex flex-col md:flex-row gap-8">
-              {/* Unassigned Players */}
-              <div className="flex-1">
-                <h3 className="font-semibold mb-2">Unassigned Players</h3>
-                <ul className="space-y-2">
-                  {players.filter(p => !teamA.some(a => a.id === p.id) && !teamB.some(b => b.id === p.id)).map(player => (
-                    <li key={player.id} className="flex items-center justify-between bg-gray-100 rounded px-3 py-2">
-                      <span>{player.name}</span>
-                      <div className="flex gap-2">
-                        <button
-                          className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600"
-                          onClick={() => setTeamA([...teamA, player])}
-                        >Team A</button>
-                        <button
-                          className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600"
-                          onClick={() => setTeamB([...teamB, player])}
-                        >Team B</button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
               {/* Team A */}
               <div className="flex-1">
                 <h3 className="font-semibold mb-2 text-blue-700">Team A</h3>
@@ -484,6 +463,48 @@ const CreateTallyGame = () => {
                 </ul>
               </div>
             </div>
+            {/* Unassigned Players */}
+            <div className="mt-8">
+              <h3 className="font-semibold mb-2">Unassigned Players</h3>
+              <ul className="space-y-2">
+                {players.filter(p => !teamA.some(a => a.id === p.id) && !teamB.some(b => b.id === p.id) && !absentPlayers.some(a => a.id === p.id)).map(player => (
+                  <li key={player.id} className="flex items-center justify-between bg-gray-100 rounded px-3 py-2">
+                    <span>{player.name}</span>
+                    <div className="flex gap-2">
+                      <button
+                        className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600"
+                        onClick={() => setTeamA([...teamA, player])}
+                      >Team A</button>
+                      <button
+                        className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600"
+                        onClick={() => setTeamB([...teamB, player])}
+                      >Team B</button>
+                      <button
+                        className="px-3 py-1 rounded bg-gray-400 text-white hover:bg-gray-500"
+                        onClick={() => setAbsentPlayers([...absentPlayers, player])}
+                      >Absent</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {/* Absent Players */}
+            {absentPlayers.length > 0 && (
+              <div className="mt-8">
+                <h3 className="font-semibold mb-2 text-gray-500">Absent Players</h3>
+                <ul className="space-y-2">
+                  {absentPlayers.map(player => (
+                    <li key={player.id} className="flex items-center justify-between bg-gray-200 rounded px-3 py-2">
+                      <span>{player.name}</span>
+                      <button
+                        className="px-3 py-1 rounded bg-blue-400 text-white hover:bg-blue-500"
+                        onClick={() => setAbsentPlayers(absentPlayers.filter(p => p.id !== player.id))}
+                      >Return to Unassigned</button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="mt-8 flex justify-end">
               <button
                 className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition disabled:opacity-50"
