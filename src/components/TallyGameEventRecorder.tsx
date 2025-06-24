@@ -203,21 +203,25 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
       </div>
       {/* Modal */}
       {modal && (
-        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black bg-opacity-40 sm:items-center" onClick={closeModal}>
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-40" onClick={closeModal}>
           <div
             ref={modalRef}
-            className="w-full max-w-md bg-white rounded-t-2xl p-6 pb-8 shadow-lg animate-fade-slide overflow-y-auto
-              sm:rounded-2xl sm:max-h-[80vh]"
+            className="w-full max-w-md bg-white rounded-t-2xl p-6 pb-8 shadow-lg animate-fade-slide overflow-y-auto sm:rounded-2xl sm:max-h-[80vh]"
             style={{
               maxHeight: '80vh',
               overscrollBehavior: 'contain',
               height: 'auto',
               ...(window.innerWidth <= 640 ? {
-                borderRadius: 0,
-                maxWidth: '100vw',
-                maxHeight: '100vh',
-                height: '100vh',
-                padding: '1.5rem',
+                borderRadius: 24,
+                maxWidth: '95vw',
+                maxHeight: '95vh',
+                height: 'auto',
+                padding: '2rem 1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
               } : {})
             }}
             onClick={e => e.stopPropagation()}
