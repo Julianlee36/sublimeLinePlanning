@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import type { Player as PlayerBase } from '../types/player';
 import type { Team } from '../types/team';
+import TallyGameEventRecorder from '../components/TallyGameEventRecorder';
+import type { Player as TallyPlayer, TallyEvent } from '../components/TallyGameEventRecorder';
 
 const LOCAL_STORAGE_KEY = 'ultimate-stats-active-game';
 
@@ -56,6 +58,9 @@ const CreateTallyGame = () => {
   const [errorLines, setErrorLines] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  // Add state to hold event log and tallies from the event recorder
+  const [tallyEventLog, setTallyEventLog] = useState<TallyEvent[]>([]);
+  const [tallyTallies, setTallyTallies] = useState<any>({});
 
   // Restore state from localStorage on mount
   useEffect(() => {
@@ -225,7 +230,7 @@ const CreateTallyGame = () => {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      // 1. Insert game
+      // 1. Insert game (include event_log as JSONB if supported)
       const gameInsert = {
         opponent: 'Tally Game',
         game_date: new Date().toISOString(),
@@ -233,6 +238,7 @@ const CreateTallyGame = () => {
         final_score_us: scoreA,
         final_score_them: scoreB,
         team_id: selectedTeamId || null,
+        event_log: tallyEventLog, // <-- Make sure 'event_log' JSONB column exists in 'games' table
       };
       const { data: gameData, error: gameError } = await supabase
         .from('games')
@@ -307,6 +313,8 @@ const CreateTallyGame = () => {
       setSelectedLineId(null);
       setTeams([]);
       setLines([]);
+      setTallyEventLog([]);
+      setTallyTallies({});
       alert('Game recorded!');
     } catch (err: any) {
       setSubmitError(err.message || 'Failed to record game.');
@@ -554,71 +562,36 @@ const CreateTallyGame = () => {
           </div>
         )}
         {step === 'game' && (
-          <div className="bg-white rounded-2xl shadow-soft p-8 mb-8">
-            <h2 className="text-2xl font-bold mb-4">Review & Finalize Game</h2>
-            <div className="mb-6">
-              <h3 className="font-semibold mb-2">Teams</h3>
-              <div className="flex flex-col md:flex-row gap-8">
-                <div className="flex-1">
-                  <h4 className="font-bold text-blue-700 mb-1">Team A</h4>
-                  <ul className="space-y-1">
-                    {teamA.map(player => (
-                      <li key={player.id}>{player.name}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-bold text-green-700 mb-1">Team B</h4>
-                  <ul className="space-y-1">
-                    {teamB.map(player => (
-                      <li key={player.id}>{player.name}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div className="mb-6 flex flex-col md:flex-row gap-8">
-              <div className="flex-1">
-                <label className="block mb-2 font-semibold">Final Score - Team A</label>
-                <input
-                  type="number"
-                  min="0"
-                  className="w-full p-3 border border-gray-200 rounded-xl"
-                  value={scoreA}
-                  onChange={e => setScoreA(Number(e.target.value))}
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block mb-2 font-semibold">Final Score - Team B</label>
-                <input
-                  type="number"
-                  min="0"
-                  className="w-full p-3 border border-gray-200 rounded-xl"
-                  value={scoreB}
-                  onChange={e => setScoreB(Number(e.target.value))}
-                />
-              </div>
-            </div>
-            <div className="mb-6 flex flex-col md:flex-row gap-8">
-              <div className="flex-1">
-                <label className="block mb-2 font-semibold">Game Duration (minutes)</label>
-                <div className="p-3 bg-gray-100 rounded-xl">{duration || 'N/A'}</div>
-              </div>
-              <div className="flex-1">
-                <label className="block mb-2 font-semibold">Score Cap</label>
-                <div className="p-3 bg-gray-100 rounded-xl">{scoreCap || 'N/A'}</div>
-              </div>
-            </div>
-            {submitError && <div className="text-red-500 mb-4">{submitError}</div>}
+          <div className="bg-white rounded-2xl shadow-soft p-4 mb-8">
+            <TallyGameEventRecorder
+              presentPlayers={[
+                ...teamA.map(p => ({ id: p.id, name: p.name, team: 'A' as const })),
+                ...teamB.map(p => ({ id: p.id, name: p.name, team: 'B' as const })),
+              ].filter(p => !absentPlayers.some(a => a.id === p.id))}
+              teamAName="Dark"
+              teamBName="Light"
+              onUpdateTallies={(tallies, eventLog) => {
+                setTallyTallies(tallies);
+                setTallyEventLog(eventLog);
+                // Optionally, update local score/defend/turnover state if you want to keep them in sync
+                setScoreA(tallies.scoreA);
+                setScoreB(tallies.scoreB);
+                setDefendsA(tallies.defendsA);
+                setDefendsB(tallies.defendsB);
+                setTurnoversA(tallies.turnoversA);
+                setTurnoversB(tallies.turnoversB);
+              }}
+            />
             <div className="mt-8 flex justify-end">
               <button
                 className="px-6 py-3 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition disabled:opacity-50"
-                disabled={scoreA === 0 && scoreB === 0 || isSubmitting}
+                disabled={isSubmitting}
                 onClick={handleSubmitGame}
               >
-                {isSubmitting ? 'Saving...' : 'Submit & Record Game'}
+                {isSubmitting ? 'Saving...' : 'End Game & Save'}
               </button>
             </div>
+            {submitError && <div className="text-red-500 mt-4">{submitError}</div>}
           </div>
         )}
       </div>
