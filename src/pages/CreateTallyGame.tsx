@@ -440,16 +440,22 @@ const CreateTallyGame = () => {
               <div className="mt-8">
                 <h3 className="font-semibold mb-2 text-gray-500">Absent Players</h3>
                 <ul className="space-y-2">
-                  {absentPlayers.map(player => (
-                    <li key={player.id} className="flex items-center justify-between bg-gray-200 rounded px-3 py-2">
-                      <span>{player.name}</span>
-                      <button
-                        className="px-3 py-1 rounded bg-blue-400 text-white hover:bg-blue-500"
-                        onClick={() => {
-                          setAbsentPlayers(absentPlayers.filter(p => p.id !== player.id));
-                          setTeamB([...teamB, player]);
-                        }}
-                      >Return to Team B</button>
+                  {absentPlayers.map((player: Player) => (
+                    <li key={player.id} className="bg-gray-100 rounded-xl px-3 py-2 mb-2 w-full">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full">
+                        <span className="font-semibold text-gray-900 whitespace-normal pl-2 text-base mb-2 md:mb-0 md:flex-1">{player.name}</span>
+                        <div className="flex gap-2 md:ml-4 w-full md:w-auto">
+                          <button
+                            className="w-full md:w-24 h-10 px-0 rounded-lg bg-red-400 text-white font-semibold hover:bg-red-500 transition text-sm flex items-center justify-center"
+                            onClick={() => {
+                              setAbsentPlayers(absentPlayers.filter(p => p.id !== player.id));
+                              setTeamB([...teamB, player]);
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -531,13 +537,22 @@ const CreateTallyGame = () => {
               <div className="mt-8">
                 <h3 className="font-semibold mb-2 text-gray-500">Absent Players</h3>
                 <ul className="space-y-2">
-                  {absentPlayers.map(player => (
-                    <li key={player.id} className="flex items-center justify-between bg-gray-200 rounded px-3 py-2">
-                      <span>{player.name}</span>
-                      <button
-                        className="px-3 py-1 rounded bg-blue-400 text-white hover:bg-blue-500"
-                        onClick={() => setAbsentPlayers(absentPlayers.filter(p => p.id !== player.id))}
-                      >Return to Unassigned</button>
+                  {absentPlayers.map((player: Player) => (
+                    <li key={player.id} className="bg-gray-100 rounded-xl px-3 py-2 mb-2 w-full">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full">
+                        <span className="font-semibold text-gray-900 whitespace-normal pl-2 text-base mb-2 md:mb-0 md:flex-1">{player.name}</span>
+                        <div className="flex gap-2 md:ml-4 w-full md:w-auto">
+                          <button
+                            className="w-full md:w-24 h-10 px-0 rounded-lg bg-red-400 text-white font-semibold hover:bg-red-500 transition text-sm flex items-center justify-center"
+                            onClick={() => {
+                              setAbsentPlayers(absentPlayers.filter(p => p.id !== player.id));
+                              setTeamB([...teamB, player]);
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
                     </li>
                   ))}
                 </ul>
