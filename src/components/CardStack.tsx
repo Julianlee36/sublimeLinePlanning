@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FaUsers } from 'react-icons/fa';
 
 interface CardData {
   id: string;
@@ -60,35 +61,34 @@ export const CardStack: React.FC<CardStackProps> = ({ cards, onSelect, selectedI
                 style={{
                   top: offset * 8,
                   zIndex: i,
-                  filter: 'blur(1px)',
-                  opacity: 0.5 - i * 0.2,
+                  filter: 'blur(1.5px)',
+                  opacity: 0.4 - i * 0.15,
                   background: getGradient(offset),
-                  borderRadius: 18,
+                  borderRadius: 24,
                   height: CARD_HEIGHT,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.10)',
                 }}
               />
             ))}
             {/* Top card */}
             <div
-              className="absolute left-0 right-0 shadow-lg transition-transform rounded-2xl"
+              className="absolute left-0 right-0 shadow-xl transition-transform rounded-3xl flex items-center px-6"
               style={{
                 top: 0,
                 zIndex: 3,
                 background: getGradient(0),
                 height: CARD_HEIGHT,
-                borderRadius: 18,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0 1.5rem',
+                borderRadius: 24,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
                 color: 'white',
                 fontWeight: 700,
                 fontSize: 22,
                 cursor: 'pointer',
+                letterSpacing: 0.2,
               }}
             >
-              {cards[0].title}
+              <FaUsers className="mr-4 text-2xl opacity-80" />
+              <span className="truncate text-lg md:text-2xl font-bold tracking-tight">{cards[0].title}</span>
               <span className="ml-auto text-lg opacity-80">▼</span>
             </div>
           </div>
@@ -102,7 +102,7 @@ export const CardStack: React.FC<CardStackProps> = ({ cards, onSelect, selectedI
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="flex flex-col gap-4"
+            className="flex flex-col gap-5"
             style={{ marginTop: 8 }}
           >
             {cards.map((card, idx) => (
@@ -117,20 +117,16 @@ export const CardStack: React.FC<CardStackProps> = ({ cards, onSelect, selectedI
                   duration: 0.38,
                   ease: 'easeOut',
                 }}
-                whileHover={{ scale: 1.03, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}
+                whileHover={{ scale: 1.03, boxShadow: '0 12px 32px rgba(0,0,0,0.22)' }}
                 whileTap={{ scale: 0.98 }}
-                className={`rounded-2xl shadow-lg cursor-pointer transition-all ${selectedId === card.id ? 'ring-4 ring-blue-400' : ''}`}
+                className={`w-full rounded-3xl shadow-xl cursor-pointer transition-all flex items-center px-6 py-4 md:py-6 ${selectedId === card.id ? 'ring-4 ring-white/80' : ''}`}
                 style={{
                   background: getGradient(idx),
-                  height: CARD_HEIGHT,
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0 1.5rem',
+                  minHeight: CARD_HEIGHT,
                   color: 'white',
                   fontWeight: 700,
                   fontSize: 20,
-                  marginBottom: idx === cards.length - 1 ? 0 : CARD_GAP,
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
                 }}
                 onClick={() => handleCardClick(card.id)}
                 tabIndex={0}
@@ -138,18 +134,19 @@ export const CardStack: React.FC<CardStackProps> = ({ cards, onSelect, selectedI
                 aria-label={`Select ${card.title}`}
                 onKeyDown={(e: React.KeyboardEvent) => (e.key === 'Enter' || e.key === ' ') && handleCardClick(card.id)}
               >
-                <div>
-                  {card.title}
+                <FaUsers className="mr-4 text-2xl opacity-90" />
+                <div className="flex-1 min-w-0">
+                  <div className="truncate text-lg md:text-2xl font-bold tracking-tight">{card.title}</div>
                   {card.description && (
-                    <div className="text-sm font-normal opacity-80 mt-1">{card.description}</div>
+                    <div className="text-sm font-normal opacity-90 mt-1 whitespace-nowrap overflow-hidden text-ellipsis">{card.description}</div>
                   )}
                 </div>
-                <span className="ml-auto text-lg opacity-80">{selectedId === card.id ? '✔' : ''}</span>
+                <span className="ml-4 text-2xl opacity-90">{selectedId === card.id ? '✔' : ''}</span>
               </motion.div>
             ))}
             {/* Collapse button */}
             <button
-              className="mt-2 text-white bg-gray-700 bg-opacity-80 rounded-xl px-4 py-2 font-semibold hover:bg-gray-800 transition"
+              className="mt-2 w-full rounded-2xl px-6 py-3 font-semibold bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg hover:from-gray-800 hover:to-black transition text-lg"
               onClick={handleToggle}
               tabIndex={0}
             >
