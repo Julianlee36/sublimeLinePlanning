@@ -23,7 +23,6 @@ const gradients = [
 ];
 
 const CARD_HEIGHT = 80;
-const CARD_GAP = 16;
 
 export const CardStack: React.FC<CardStackProps> = ({ cards, onSelect, selectedId }) => {
   const [expanded, setExpanded] = useState(false);
