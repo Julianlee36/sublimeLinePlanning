@@ -52,11 +52,8 @@ const CreateTallyGame = () => {
   const [absentPlayers, setAbsentPlayers] = useState<Player[]>([]);
   // const [editEventIdx, setEditEventIdx] = useState<number | null>(null);
   const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
-  const [teams, setTeams] = useState<Team[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
-  const [loadingTeams, setLoadingTeams] = useState(false);
   const [loadingLines, setLoadingLines] = useState(false);
-  const [errorTeams, setErrorTeams] = useState<string | null>(null);
   const [errorLines, setErrorLines] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -178,26 +175,6 @@ const CreateTallyGame = () => {
   // When saving an event, replace if editing
   // const handleModalNext = (value: any) => { /* ... */ };
 
-  // Fetch teams on mount
-  useEffect(() => {
-    if (teamCreationMethod === 'lines') {
-      const fetchTeams = async () => {
-        setLoadingTeams(true);
-        try {
-          const { data, error } = await supabase
-            .from('teams')
-            .select('*')
-            .order('created_at', { ascending: false });
-          if (error) setErrorTeams(error.message);
-          else setTeams(data || []);
-        } finally {
-          setLoadingTeams(false);
-        }
-      };
-      fetchTeams();
-    }
-  }, [teamCreationMethod]);
-
   // Fetch lines and players when teamCreationMethod is 'lines' and teamId is available
   useEffect(() => {
     if (teamCreationMethod === 'lines' && teamId) {
@@ -311,7 +288,6 @@ const CreateTallyGame = () => {
       setEvents([]);
       setAbsentPlayers([]);
       setSelectedLineId(null);
-      setTeams([]);
       setLines([]);
       setTallyEventLog([]);
       alert('Game recorded!');
@@ -342,7 +318,6 @@ const CreateTallyGame = () => {
     setEvents([]);
     setAbsentPlayers([]);
     setSelectedLineId(null);
-    setTeams([]);
     setLines([]);
     setTallyEventLog([]);
     setShowDiscardConfirm(false);
