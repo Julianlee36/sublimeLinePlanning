@@ -126,9 +126,9 @@ const AnalyticsDashboard = () => {
     return stats;
   }, [players, events]);
 
-  // 3. Chemistry Heat Map (player-pair completions)
+  // 3. Chemistry Heat Map (player-pair goals/assists)
   const chemistryMatrix = useMemo(() => {
-    // Matrix: thrower_id -> receiver_id -> completions
+    // Matrix: thrower_id -> receiver_id -> goals (assists)
     const matrix: Record<string, Record<string, number>> = {};
     players.forEach((p1) => {
       matrix[p1.id] = {};
@@ -137,7 +137,8 @@ const AnalyticsDashboard = () => {
       });
     });
     events.forEach((e) => {
-      if (e.result === 'completion' && e.thrower_id && e.receiver_id) {
+      // Count only goals with both thrower (assister) and receiver (scorer)
+      if (e.result === 'goal' && e.thrower_id && e.receiver_id) {
         matrix[e.thrower_id][e.receiver_id]++;
       }
     });
