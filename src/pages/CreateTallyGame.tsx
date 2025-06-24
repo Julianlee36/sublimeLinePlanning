@@ -1,9 +1,24 @@
 import { useState, useEffect } from 'react';
 // import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import type { Player } from '../types/player';
+import type { Player as PlayerBase } from '../types/player';
+import type { Team } from '../types/team';
 
 const LOCAL_STORAGE_KEY = 'ultimate-stats-active-game';
+
+interface Line {
+  id: string;
+  team_id: string;
+  name: string;
+  description: string;
+  player_ids: string[];
+  created_at: string;
+}
+
+// Extend Player type locally to include team_id for this file
+interface Player extends PlayerBase {
+  team_id?: string;
+}
 
 const CreateTallyGame = () => {
   // const [searchParams] = useSearchParams();
@@ -31,6 +46,16 @@ const CreateTallyGame = () => {
   // const [modalStepKey, setModalStepKey] = useState(0);
   const [absentPlayers, setAbsentPlayers] = useState<Player[]>([]);
   // const [editEventIdx, setEditEventIdx] = useState<number | null>(null);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [lines, setLines] = useState<Line[]>([]);
+  const [loadingTeams, setLoadingTeams] = useState(false);
+  const [loadingLines, setLoadingLines] = useState(false);
+  const [errorTeams, setErrorTeams] = useState<string | null>(null);
+  const [errorLines, setErrorLines] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Restore state from localStorage on mount
   useEffect(() => {
@@ -55,6 +80,8 @@ const CreateTallyGame = () => {
         setTurnoversB(parsed.turnoversB ?? 0);
         setEvents(parsed.events ?? []);
         setAbsentPlayers(parsed.absentPlayers ?? []);
+        setSelectedTeamId(parsed.selectedTeamId ?? null);
+        setSelectedLineId(parsed.selectedLineId ?? null);
       } catch {}
     }
   }, []);
@@ -79,9 +106,11 @@ const CreateTallyGame = () => {
       turnoversB,
       events,
       absentPlayers,
+      selectedTeamId,
+      selectedLineId,
     };
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
-  }, [teamCreationMethod, players, teamA, teamB, step, duration, scoreCap, timer, timerActive, scoreA, scoreB, defendsA, defendsB, turnoversA, turnoversB, events, absentPlayers]);
+  }, [teamCreationMethod, players, teamA, teamB, step, duration, scoreCap, timer, timerActive, scoreA, scoreB, defendsA, defendsB, turnoversA, turnoversB, events, absentPlayers, selectedTeamId, selectedLineId]);
 
   // After saving or resetting, clear localStorage
   // const clearGameState = () => { /* ... */ };
@@ -143,17 +172,434 @@ const CreateTallyGame = () => {
   // When saving an event, replace if editing
   // const handleModalNext = (value: any) => { /* ... */ };
 
+  // Fetch teams on mount
+  useEffect(() => {
+    if (teamCreationMethod === 'lines') {
+      const fetchTeams = async () => {
+        setLoadingTeams(true);
+        try {
+          const { data, error } = await supabase
+            .from('teams')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (error) setErrorTeams(error.message);
+          else setTeams(data || []);
+        } finally {
+          setLoadingTeams(false);
+        }
+      };
+      fetchTeams();
+    }
+  }, [teamCreationMethod]);
+
+  // Fetch lines and players when a team is selected
+  useEffect(() => {
+    if (teamCreationMethod === 'lines' && selectedTeamId) {
+      const fetchLinesAndPlayers = async () => {
+        setLoadingLines(true);
+        setErrorLines(null);
+        try {
+          // Fetch lines for the selected team
+          const { data: linesData, error: linesError } = await supabase
+            .from('lines')
+            .select('*')
+            .eq('team_id', selectedTeamId)
+            .order('created_at', { ascending: false });
+          if (linesError) setErrorLines(linesError.message);
+          else setLines(linesData || []);
+          // Fetch players for the selected team
+          const { data: playersData, error: playersError } = await supabase
+            .from('players')
+            .select('*')
+            .eq('team_id', selectedTeamId);
+          if (!playersError) setPlayers(playersData || []);
+        } finally {
+          setLoadingLines(false);
+        }
+      };
+      fetchLinesAndPlayers();
+    }
+  }, [teamCreationMethod, selectedTeamId]);
+
+  const handleSubmitGame = async () => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      // 1. Insert game
+      const gameInsert = {
+        opponent: 'Tally Game',
+        game_date: new Date().toISOString(),
+        game_type: 'tally',
+        final_score_us: scoreA,
+        final_score_them: scoreB,
+        team_id: selectedTeamId || null,
+      };
+      const { data: gameData, error: gameError } = await supabase
+        .from('games')
+        .insert(gameInsert)
+        .select()
+        .single();
+      if (gameError) throw gameError;
+      const gameId = gameData.id;
+
+      // 2. Insert lineups
+      const lineupInserts = [
+        {
+          game_id: gameId,
+          team: 'Dark',
+          player_ids: teamA.map(p => p.id),
+        },
+        {
+          game_id: gameId,
+          team: 'Light',
+          player_ids: teamB.map(p => p.id),
+        },
+      ];
+      const { error: lineupError } = await supabase
+        .from('lineups')
+        .insert(lineupInserts);
+      if (lineupError) throw lineupError;
+
+      // 3. Insert tally points for winning team
+      let winner: 'Dark' | 'Light' | null = null;
+      if (scoreA > scoreB) winner = 'Dark';
+      else if (scoreB > scoreA) winner = 'Light';
+      if (winner) {
+        const winningPlayers = winner === 'Dark' ? teamA : teamB;
+        // Prevent duplicate points for same player/game
+        for (const player of winningPlayers) {
+          const { data: existing, error: tallyCheckError } = await supabase
+            .from('tally_points')
+            .select('id')
+            .eq('game_id', gameId)
+            .eq('player_id', player.id)
+            .maybeSingle();
+          if (tallyCheckError) throw tallyCheckError;
+          if (!existing) {
+            const { error: tallyInsertError } = await supabase
+              .from('tally_points')
+              .insert({ game_id: gameId, player_id: player.id });
+            if (tallyInsertError) throw tallyInsertError;
+          }
+        }
+      }
+
+      // Success: reset state and show alert
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      setTeamCreationMethod(null);
+      setPlayers([]);
+      setTeamA([]);
+      setTeamB([]);
+      setStep('teams');
+      setDuration(0);
+      setScoreCap(0);
+      setTimer(0);
+      setTimerActive(false);
+      setScoreA(0);
+      setScoreB(0);
+      setDefendsA(0);
+      setDefendsB(0);
+      setTurnoversA(0);
+      setTurnoversB(0);
+      setEvents([]);
+      setAbsentPlayers([]);
+      setSelectedTeamId(null);
+      setSelectedLineId(null);
+      setTeams([]);
+      setLines([]);
+      alert('Game recorded!');
+    } catch (err: any) {
+      setSubmitError(err.message || 'Failed to record game.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-3xl mx-auto p-4 space-y-10">
-        {/* Example: Main heading and step cards */}
-        {step === 'teams' && (
+        {teamCreationMethod === null && (
           <div className="bg-white rounded-2xl shadow-soft p-8 mb-8">
             <h1 className="text-4xl font-extrabold mb-6 text-gray-900 tracking-tight">Create Tally Game</h1>
-            {/* ...rest of the step UI... */}
+            <p className="mb-4 text-lg">How would you like to create teams?</p>
+            <div className="flex gap-4">
+              <button
+                className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition"
+                onClick={() => setTeamCreationMethod('lines')}
+              >
+                Pick from existing lines/teams
+              </button>
+              <button
+                className="px-6 py-3 rounded-xl bg-gray-200 text-gray-900 font-bold hover:bg-gray-300 transition"
+                onClick={() => setTeamCreationMethod('scratch')}
+              >
+                Manually assign players
+              </button>
+            </div>
           </div>
         )}
-        {/* ...other steps/cards would be similarly styled... */}
+        {teamCreationMethod === 'lines' && step === 'teams' && (
+          <div className="bg-white rounded-2xl shadow-soft p-8 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Pick a Line</h2>
+            <div className="mb-4">
+              <label className="block mb-2 font-semibold">Select a Team</label>
+              {loadingTeams ? (
+                <p>Loading teams...</p>
+              ) : errorTeams ? (
+                <p className="text-red-500">{errorTeams}</p>
+              ) : (
+                <select
+                  className="w-full p-3 border border-gray-200 rounded-xl"
+                  value={selectedTeamId || ''}
+                  onChange={e => {
+                    setSelectedTeamId(e.target.value);
+                    setSelectedLineId('');
+                    setTeamA([]);
+                    setTeamB([]);
+                  }}
+                >
+                  <option value="">-- Select Team --</option>
+                  {teams.map((team: Team) => (
+                    <option key={team.id} value={team.id}>{team.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+            {selectedTeamId && (
+              <div className="mb-4">
+                <label className="block mb-2 font-semibold">Select a Line</label>
+                {loadingLines ? (
+                  <p>Loading lines...</p>
+                ) : errorLines ? (
+                  <p className="text-red-500">{errorLines}</p>
+                ) : (
+                  <select
+                    className="w-full p-3 border border-gray-200 rounded-xl"
+                    value={selectedLineId || ''}
+                    onChange={e => {
+                      setSelectedLineId(e.target.value);
+                      const line = lines.find((l: Line) => l.id === e.target.value);
+                      if (line) {
+                        setTeamA(players.filter((p: Player) => line.player_ids.includes(p.id)));
+                        setTeamB(players.filter((p: Player) => !line.player_ids.includes(p.id)));
+                      }
+                    }}
+                  >
+                    <option value="">-- Select Line --</option>
+                    {lines.map((line: Line) => (
+                      <option key={line.id} value={line.id}>{line.name}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
+            <div className="flex flex-col md:flex-row gap-8 mt-6">
+              {/* Team A */}
+              <div className="flex-1">
+                <h3 className="font-semibold mb-2 text-blue-700">Team A (Line)</h3>
+                <ul className="space-y-2">
+                  {teamA.map((player: Player) => (
+                    <li key={player.id} className="flex items-center justify-between bg-blue-50 rounded px-3 py-2">
+                      <span>{player.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {/* Team B */}
+              <div className="flex-1">
+                <h3 className="font-semibold mb-2 text-green-700">Team B (Rest of Team)</h3>
+                <ul className="space-y-2">
+                  {teamB.map((player: Player) => (
+                    <li key={player.id} className="flex items-center justify-between bg-green-50 rounded px-3 py-2">
+                      <span>{player.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className="mt-8 flex justify-end">
+              <button
+                className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition disabled:opacity-50"
+                disabled={teamA.length === 0 || teamB.length === 0}
+                onClick={() => setStep('settings')}
+              >
+                Next: Game Settings
+              </button>
+            </div>
+          </div>
+        )}
+        {teamCreationMethod === 'scratch' && step === 'teams' && (
+          <div className="bg-white rounded-2xl shadow-soft p-8 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Assign Players to Sub-Teams</h2>
+            <div className="flex flex-col md:flex-row gap-8">
+              {/* Unassigned Players */}
+              <div className="flex-1">
+                <h3 className="font-semibold mb-2">Unassigned Players</h3>
+                <ul className="space-y-2">
+                  {players.filter(p => !teamA.some(a => a.id === p.id) && !teamB.some(b => b.id === p.id)).map(player => (
+                    <li key={player.id} className="flex items-center justify-between bg-gray-100 rounded px-3 py-2">
+                      <span>{player.name}</span>
+                      <div className="flex gap-2">
+                        <button
+                          className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600"
+                          onClick={() => setTeamA([...teamA, player])}
+                        >Team A</button>
+                        <button
+                          className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600"
+                          onClick={() => setTeamB([...teamB, player])}
+                        >Team B</button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {/* Team A */}
+              <div className="flex-1">
+                <h3 className="font-semibold mb-2 text-blue-700">Team A</h3>
+                <ul className="space-y-2">
+                  {teamA.map(player => (
+                    <li key={player.id} className="flex items-center justify-between bg-blue-50 rounded px-3 py-2">
+                      <span>{player.name}</span>
+                      <button
+                        className="px-2 py-1 rounded bg-red-400 text-white hover:bg-red-500"
+                        onClick={() => setTeamA(teamA.filter(p => p.id !== player.id))}
+                      >Remove</button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {/* Team B */}
+              <div className="flex-1">
+                <h3 className="font-semibold mb-2 text-green-700">Team B</h3>
+                <ul className="space-y-2">
+                  {teamB.map(player => (
+                    <li key={player.id} className="flex items-center justify-between bg-green-50 rounded px-3 py-2">
+                      <span>{player.name}</span>
+                      <button
+                        className="px-2 py-1 rounded bg-red-400 text-white hover:bg-red-500"
+                        onClick={() => setTeamB(teamB.filter(p => p.id !== player.id))}
+                      >Remove</button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div className="mt-8 flex justify-end">
+              <button
+                className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition disabled:opacity-50"
+                disabled={teamA.length === 0 || teamB.length === 0}
+                onClick={() => setStep('settings')}
+              >
+                Next: Game Settings
+              </button>
+            </div>
+          </div>
+        )}
+        {step === 'settings' && (
+          <div className="bg-white rounded-2xl shadow-soft p-8 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Game Settings</h2>
+            <div className="mb-6 flex flex-col md:flex-row gap-8">
+              <div className="flex-1">
+                <label className="block mb-2 font-semibold">Game Duration (minutes, optional)</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full p-3 border border-gray-200 rounded-xl"
+                  value={duration || ''}
+                  onChange={e => setDuration(Number(e.target.value))}
+                  placeholder="e.g. 30"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block mb-2 font-semibold">Score Cap (optional)</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full p-3 border border-gray-200 rounded-xl"
+                  value={scoreCap || ''}
+                  onChange={e => setScoreCap(Number(e.target.value))}
+                  placeholder="e.g. 15"
+                />
+              </div>
+            </div>
+            <div className="mt-8 flex justify-end">
+              <button
+                className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition"
+                onClick={() => setStep('game')}
+              >
+                Next: Review & Start Game
+              </button>
+            </div>
+          </div>
+        )}
+        {step === 'game' && (
+          <div className="bg-white rounded-2xl shadow-soft p-8 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Review & Finalize Game</h2>
+            <div className="mb-6">
+              <h3 className="font-semibold mb-2">Teams</h3>
+              <div className="flex flex-col md:flex-row gap-8">
+                <div className="flex-1">
+                  <h4 className="font-bold text-blue-700 mb-1">Team A</h4>
+                  <ul className="space-y-1">
+                    {teamA.map(player => (
+                      <li key={player.id}>{player.name}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-green-700 mb-1">Team B</h4>
+                  <ul className="space-y-1">
+                    {teamB.map(player => (
+                      <li key={player.id}>{player.name}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div className="mb-6 flex flex-col md:flex-row gap-8">
+              <div className="flex-1">
+                <label className="block mb-2 font-semibold">Final Score - Team A</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full p-3 border border-gray-200 rounded-xl"
+                  value={scoreA}
+                  onChange={e => setScoreA(Number(e.target.value))}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block mb-2 font-semibold">Final Score - Team B</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full p-3 border border-gray-200 rounded-xl"
+                  value={scoreB}
+                  onChange={e => setScoreB(Number(e.target.value))}
+                />
+              </div>
+            </div>
+            <div className="mb-6 flex flex-col md:flex-row gap-8">
+              <div className="flex-1">
+                <label className="block mb-2 font-semibold">Game Duration (minutes)</label>
+                <div className="p-3 bg-gray-100 rounded-xl">{duration || 'N/A'}</div>
+              </div>
+              <div className="flex-1">
+                <label className="block mb-2 font-semibold">Score Cap</label>
+                <div className="p-3 bg-gray-100 rounded-xl">{scoreCap || 'N/A'}</div>
+              </div>
+            </div>
+            {submitError && <div className="text-red-500 mb-4">{submitError}</div>}
+            <div className="mt-8 flex justify-end">
+              <button
+                className="px-6 py-3 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition disabled:opacity-50"
+                disabled={scoreA === 0 && scoreB === 0 || isSubmitting}
+                onClick={handleSubmitGame}
+              >
+                {isSubmitting ? 'Saving...' : 'Submit & Record Game'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

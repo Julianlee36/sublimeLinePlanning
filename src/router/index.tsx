@@ -13,6 +13,7 @@ import AuthRedirect from "./AuthRedirect.tsx";
 import CreateTallyGame from "../pages/CreateTallyGame.tsx";
 import TeamMenu from "../pages/TeamMenu";
 import AnalyticsDashboard from "../pages/AnalyticsDashboard";
+import LineManagement from '../pages/LineManagement';
 
 export const createRouter = (session: Session | null) => {
     return createBrowserRouter([
@@ -59,6 +60,10 @@ export const createRouter = (session: Session | null) => {
                                 {
                                     path: "team/:teamId/analytics",
                                     element: <AnalyticsDashboard />,
+                                },
+                                {
+                                    path: "team/:teamId/lines",
+                                    element: <LineManagement />,
                                 },
                             ],
                         },

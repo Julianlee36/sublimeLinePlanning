@@ -47,4 +47,14 @@ CREATE TABLE lineups (
     is_offense BOOLEAN,
     team TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create the lines table
+CREATE TABLE lines (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    description TEXT,
+    player_ids UUID[],
+    created_at TIMESTAMPTZ DEFAULT NOW()
 ); 
