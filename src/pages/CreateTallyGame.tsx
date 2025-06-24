@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import type { Player as PlayerBase } from '../types/player';
 import type { Team } from '../types/team';
 import TallyGameEventRecorder from '../components/TallyGameEventRecorder';
-import type { Player as TallyPlayer, TallyEvent } from '../components/TallyGameEventRecorder';
+import type { TallyEvent } from '../components/TallyGameEventRecorder';
 
 const LOCAL_STORAGE_KEY = 'ultimate-stats-active-game';
 
@@ -58,9 +58,8 @@ const CreateTallyGame = () => {
   const [errorLines, setErrorLines] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  // Add state to hold event log and tallies from the event recorder
+  // Add state to hold event log from the event recorder
   const [tallyEventLog, setTallyEventLog] = useState<TallyEvent[]>([]);
-  const [tallyTallies, setTallyTallies] = useState<any>({});
 
   // Restore state from localStorage on mount
   useEffect(() => {
@@ -314,7 +313,6 @@ const CreateTallyGame = () => {
       setTeams([]);
       setLines([]);
       setTallyEventLog([]);
-      setTallyTallies({});
       alert('Game recorded!');
     } catch (err: any) {
       setSubmitError(err.message || 'Failed to record game.');
@@ -571,7 +569,6 @@ const CreateTallyGame = () => {
               teamAName="Dark"
               teamBName="Light"
               onUpdateTallies={(tallies, eventLog) => {
-                setTallyTallies(tallies);
                 setTallyEventLog(eventLog);
                 // Optionally, update local score/defend/turnover state if you want to keep them in sync
                 setScoreA(tallies.scoreA);

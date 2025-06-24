@@ -340,13 +340,15 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({ options, value, i
   const [highlight, setHighlight] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => { if (inputRef.current) inputRef.current.focus(); }, []);
+  // Show selected player's name if selected, otherwise show input
+  const displayValue = value ? value.name : input;
   return (
     <div>
       <input
         ref={inputRef}
         className="w-full p-3 border border-gray-300 rounded-xl mb-2"
         placeholder="Type to search..."
-        value={input}
+        value={displayValue}
         onChange={e => { onInput(e.target.value); setHighlight(0); }}
         onKeyDown={e => {
           if (e.key === 'ArrowDown') setHighlight(h => Math.min(h + 1, options.length - 1));
@@ -358,7 +360,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({ options, value, i
         {options.map((p, i) => (
           <li
             key={p.id}
-            className={`px-3 py-2 cursor-pointer ${i === highlight ? 'bg-blue-100' : ''}`}
+            className={`px-3 py-2 cursor-pointer ${i === highlight ? 'bg-blue-100' : ''}${value && value.id === p.id ? ' font-bold' : ''}`}
             onMouseEnter={() => setHighlight(i)}
             onClick={() => onSelect(p)}
           >
