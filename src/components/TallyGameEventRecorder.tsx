@@ -340,8 +340,21 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({ options, value, i
   const [highlight, setHighlight] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => { if (inputRef.current) inputRef.current.focus(); }, []);
-  // Show selected player's name if selected, otherwise show input
-  const displayValue = value ? value.name : input;
+
+  // If the user selects a player, show their name in the input. If the user types, show the input.
+  // We'll treat "input" as the source of truth unless a player is selected and input matches their name.
+  const displayValue = value && input === value.name ? value.name : input;
+
+  // When the user types, clear the selection if it doesn't match the selected player's name
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    onInput(newValue);
+    setHighlight(0);
+    if (value && newValue !== value.name) {
+      onSelect(null as any); // Clear selection if input doesn't match selected player's name
+    }
+  };
+
   return (
     <div>
       <input
@@ -349,7 +362,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({ options, value, i
         className="w-full p-3 border border-gray-300 rounded-xl mb-2"
         placeholder="Type to search..."
         value={displayValue}
-        onChange={e => { onInput(e.target.value); setHighlight(0); }}
+        onChange={handleInputChange}
         onKeyDown={e => {
           if (e.key === 'ArrowDown') setHighlight(h => Math.min(h + 1, options.length - 1));
           if (e.key === 'ArrowUp') setHighlight(h => Math.max(h - 1, 0));
