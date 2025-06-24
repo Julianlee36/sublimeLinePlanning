@@ -104,45 +104,56 @@ export const CardStack: React.FC<CardStackProps> = ({ cards, onSelect, selectedI
             className="flex flex-col gap-5"
             style={{ marginTop: 8 }}
           >
-            {cards.map((card, idx) => (
-              <motion.div
-                key={card.id}
-                layoutId={card.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 30 }}
-                transition={{
-                  delay: idx * 0.07,
-                  duration: 0.38,
-                  ease: 'easeOut',
-                }}
-                whileHover={{ scale: 1.03, boxShadow: '0 12px 32px rgba(0,0,0,0.22)' }}
-                whileTap={{ scale: 0.98 }}
-                className={`w-full rounded-3xl shadow-xl cursor-pointer transition-all flex items-center px-6 py-4 md:py-6 ${selectedId === card.id ? 'ring-4 ring-white/80' : ''}`}
-                style={{
-                  background: getGradient(idx),
-                  minHeight: CARD_HEIGHT,
-                  color: 'white',
-                  fontWeight: 700,
-                  fontSize: 20,
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-                }}
-                onClick={() => handleCardClick(card.id)}
-                tabIndex={0}
-                role="button"
-                aria-label={`Select ${card.title}`}
-                onKeyDown={(e: React.KeyboardEvent) => (e.key === 'Enter' || e.key === ' ') && handleCardClick(card.id)}
-              >
-                <FaUsers className="mr-4 text-2xl opacity-90" />
-                <div className="flex-1 min-w-0">
-                  <div className="truncate text-lg md:text-2xl font-bold tracking-tight">{card.title}</div>
-                  {card.description && (
-                    <div className="text-sm font-normal opacity-90 mt-1 whitespace-nowrap overflow-hidden text-ellipsis">{card.description}</div>
-                  )}
-                </div>
-                <span className="ml-4 text-2xl opacity-90">{selectedId === card.id ? '✔' : ''}</span>
-              </motion.div>
-            ))}
+            {cards.map((card, idx) => {
+              // Determine border radius for wallet effect
+              let borderRadius = '0px';
+              if (idx === 0 && cards.length === 1) borderRadius = '24px'; // single card
+              else if (idx === 0) borderRadius = '24px 24px 0 0'; // top card
+              else if (idx === cards.length - 1) borderRadius = '0 0 24px 24px'; // bottom card
+              // else: middle card, no rounding
+              return (
+                <motion.div
+                  key={card.id}
+                  layoutId={card.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 30 }}
+                  transition={{
+                    delay: idx * 0.07,
+                    duration: 0.38,
+                    ease: 'easeOut',
+                  }}
+                  whileHover={{ scale: 1.01, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`w-full shadow-xl cursor-pointer transition-all flex items-center px-6 py-4 md:py-6 ${selectedId === card.id ? 'ring-4 ring-white/80' : ''}`}
+                  style={{
+                    background: getGradient(idx),
+                    minHeight: CARD_HEIGHT,
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: 20,
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+                    borderRadius,
+                    marginTop: 0,
+                    marginBottom: 0,
+                  }}
+                  onClick={() => handleCardClick(card.id)}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`Select ${card.title}`}
+                  onKeyDown={(e: React.KeyboardEvent) => (e.key === 'Enter' || e.key === ' ') && handleCardClick(card.id)}
+                >
+                  <FaUsers className="mr-4 text-2xl opacity-90" />
+                  <div className="flex-1 min-w-0">
+                    <div className="truncate text-lg md:text-2xl font-bold tracking-tight">{card.title}</div>
+                    {card.description && (
+                      <div className="text-sm font-normal opacity-90 mt-1 whitespace-nowrap overflow-hidden text-ellipsis">{card.description}</div>
+                    )}
+                  </div>
+                  <span className="ml-4 text-2xl opacity-90">{selectedId === card.id ? '✔' : ''}</span>
+                </motion.div>
+              );
+            })}
             {/* Collapse button */}
             <button
               className="mt-2 w-full rounded-2xl px-6 py-3 font-semibold bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-lg hover:from-gray-800 hover:to-black transition text-lg"
