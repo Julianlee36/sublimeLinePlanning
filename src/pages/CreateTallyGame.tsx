@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-// import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import type { Player as PlayerBase } from '../types/player';
 import type { Team } from '../types/team';
@@ -23,8 +23,11 @@ interface Player extends PlayerBase {
 }
 
 const CreateTallyGame = () => {
-  // const [searchParams] = useSearchParams();
-  // const teamId = searchParams.get('teamId');
+  // Get teamId from route or query param
+  const { teamId: routeTeamId } = useParams<{ teamId: string }>();
+  const [searchParams] = useSearchParams();
+  const queryTeamId = searchParams.get('teamId');
+  const teamId = routeTeamId || queryTeamId || null;
   const [teamCreationMethod, setTeamCreationMethod] = useState<'lines' | 'scratch' | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [teamA, setTeamA] = useState<Player[]>([]);
@@ -48,7 +51,6 @@ const CreateTallyGame = () => {
   // const [modalStepKey, setModalStepKey] = useState(0);
   const [absentPlayers, setAbsentPlayers] = useState<Player[]>([]);
   // const [editEventIdx, setEditEventIdx] = useState<number | null>(null);
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [selectedLineId, setSelectedLineId] = useState<string | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
@@ -86,7 +88,6 @@ const CreateTallyGame = () => {
         setTurnoversB(parsed.turnoversB ?? 0);
         setEvents(parsed.events ?? []);
         setAbsentPlayers(parsed.absentPlayers ?? []);
-        setSelectedTeamId(parsed.selectedTeamId ?? null);
         setSelectedLineId(parsed.selectedLineId ?? null);
       } catch {}
     }
@@ -112,11 +113,10 @@ const CreateTallyGame = () => {
       turnoversB,
       events,
       absentPlayers,
-      selectedTeamId,
       selectedLineId,
     };
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
-  }, [teamCreationMethod, players, teamA, teamB, step, duration, scoreCap, timer, timerActive, scoreA, scoreB, defendsA, defendsB, turnoversA, turnoversB, events, absentPlayers, selectedTeamId, selectedLineId]);
+  }, [teamCreationMethod, players, teamA, teamB, step, duration, scoreCap, timer, timerActive, scoreA, scoreB, defendsA, defendsB, turnoversA, turnoversB, events, absentPlayers, selectedLineId]);
 
   // After saving or resetting, clear localStorage
   // const clearGameState = () => { /* ... */ };
@@ -198,26 +198,26 @@ const CreateTallyGame = () => {
     }
   }, [teamCreationMethod]);
 
-  // Fetch lines and players when a team is selected
+  // Fetch lines and players when teamCreationMethod is 'lines' and teamId is available
   useEffect(() => {
-    if (teamCreationMethod === 'lines' && selectedTeamId) {
+    if (teamCreationMethod === 'lines' && teamId) {
       const fetchLinesAndPlayers = async () => {
         setLoadingLines(true);
         setErrorLines(null);
         try {
-          // Fetch lines for the selected team
+          // Fetch lines for the team
           const { data: linesData, error: linesError } = await supabase
             .from('lines')
             .select('*')
-            .eq('team_id', selectedTeamId)
+            .eq('team_id', teamId)
             .order('created_at', { ascending: false });
           if (linesError) setErrorLines(linesError.message);
           else setLines(linesData || []);
-          // Fetch players for the selected team
+          // Fetch players for the team
           const { data: playersData, error: playersError } = await supabase
             .from('players')
             .select('*')
-            .eq('team_id', selectedTeamId);
+            .eq('team_id', teamId);
           if (!playersError) setPlayers(playersData || []);
         } finally {
           setLoadingLines(false);
@@ -225,7 +225,7 @@ const CreateTallyGame = () => {
       };
       fetchLinesAndPlayers();
     }
-  }, [teamCreationMethod, selectedTeamId]);
+  }, [teamCreationMethod, teamId]);
 
   const handleSubmitGame = async () => {
     setIsSubmitting(true);
@@ -238,7 +238,7 @@ const CreateTallyGame = () => {
         game_type: 'tally',
         final_score_us: scoreA,
         final_score_them: scoreB,
-        team_id: selectedTeamId || null,
+        team_id: teamId || null,
         event_log: tallyEventLog, // <-- Make sure 'event_log' JSONB column exists in 'games' table
       };
       const { data: gameData, error: gameError } = await supabase
@@ -310,7 +310,6 @@ const CreateTallyGame = () => {
       setTurnoversB(0);
       setEvents([]);
       setAbsentPlayers([]);
-      setSelectedTeamId(null);
       setSelectedLineId(null);
       setTeams([]);
       setLines([]);
@@ -342,7 +341,6 @@ const CreateTallyGame = () => {
     setTurnoversB(0);
     setEvents([]);
     setAbsentPlayers([]);
-    setSelectedTeamId(null);
     setSelectedLineId(null);
     setTeams([]);
     setLines([]);
@@ -379,57 +377,34 @@ const CreateTallyGame = () => {
           <div className="bg-white rounded-2xl shadow-soft p-8 mb-8">
             <h2 className="text-2xl font-bold mb-4">Pick a Line</h2>
             <div className="mb-4">
-              <label className="block mb-2 font-semibold">Select a Team</label>
-              {loadingTeams ? (
-                <p>Loading teams...</p>
-              ) : errorTeams ? (
-                <p className="text-red-500">{errorTeams}</p>
+              <label className="block mb-2 font-semibold">Select a Line</label>
+              {loadingLines ? (
+                <p>Loading lines...</p>
+              ) : errorLines ? (
+                <p className="text-red-500">{errorLines}</p>
               ) : (
                 <select
                   className="w-full p-3 border border-gray-200 rounded-xl"
-                  value={selectedTeamId || ''}
+                  value={selectedLineId || ''}
                   onChange={e => {
-                    setSelectedTeamId(e.target.value);
-                    setSelectedLineId('');
-                    setTeamA([]);
-                    setTeamB([]);
+                    setSelectedLineId(e.target.value);
+                    const line = lines.find((l: Line) => l.id === e.target.value);
+                    if (line) {
+                      setTeamA(players.filter((p: Player) => line.player_ids.includes(p.id)));
+                      setTeamB(players.filter((p: Player) => !line.player_ids.includes(p.id) && !absentPlayers.some(a => a.id === p.id)));
+                    } else {
+                      setTeamA([]);
+                      setTeamB([]);
+                    }
                   }}
                 >
-                  <option value="">-- Select Team --</option>
-                  {teams.map((team: Team) => (
-                    <option key={team.id} value={team.id}>{team.name}</option>
+                  <option value="">-- Select Line --</option>
+                  {lines.map((line: Line) => (
+                    <option key={line.id} value={line.id}>{line.name}</option>
                   ))}
                 </select>
               )}
             </div>
-            {selectedTeamId && (
-              <div className="mb-4">
-                <label className="block mb-2 font-semibold">Select a Line</label>
-                {loadingLines ? (
-                  <p>Loading lines...</p>
-                ) : errorLines ? (
-                  <p className="text-red-500">{errorLines}</p>
-                ) : (
-                  <select
-                    className="w-full p-3 border border-gray-200 rounded-xl"
-                    value={selectedLineId || ''}
-                    onChange={e => {
-                      setSelectedLineId(e.target.value);
-                      const line = lines.find((l: Line) => l.id === e.target.value);
-                      if (line) {
-                        setTeamA(players.filter((p: Player) => line.player_ids.includes(p.id)));
-                        setTeamB(players.filter((p: Player) => !line.player_ids.includes(p.id)));
-                      }
-                    }}
-                  >
-                    <option value="">-- Select Line --</option>
-                    {lines.map((line: Line) => (
-                      <option key={line.id} value={line.id}>{line.name}</option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            )}
             <div className="flex flex-col md:flex-row gap-8 mt-6">
               {/* Team A */}
               <div className="flex-1">
@@ -449,11 +424,47 @@ const CreateTallyGame = () => {
                   {teamB.map((player: Player) => (
                     <li key={player.id} className="flex items-center justify-between bg-green-50 rounded px-3 py-2">
                       <span>{player.name}</span>
+                      <div className="flex gap-2">
+                        <button
+                          className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600"
+                          onClick={() => {
+                            setTeamA([...teamA, player]);
+                            setTeamB(teamB.filter(p => p.id !== player.id));
+                          }}
+                        >Add to Line (Temp)</button>
+                        <button
+                          className="px-3 py-1 rounded bg-gray-400 text-white hover:bg-gray-500"
+                          onClick={() => {
+                            setAbsentPlayers([...absentPlayers, player]);
+                            setTeamB(teamB.filter(p => p.id !== player.id));
+                          }}
+                        >Absent</button>
+                      </div>
                     </li>
                   ))}
                 </ul>
               </div>
             </div>
+            {/* Absent Players */}
+            {absentPlayers.length > 0 && (
+              <div className="mt-8">
+                <h3 className="font-semibold mb-2 text-gray-500">Absent Players</h3>
+                <ul className="space-y-2">
+                  {absentPlayers.map(player => (
+                    <li key={player.id} className="flex items-center justify-between bg-gray-200 rounded px-3 py-2">
+                      <span>{player.name}</span>
+                      <button
+                        className="px-3 py-1 rounded bg-blue-400 text-white hover:bg-blue-500"
+                        onClick={() => {
+                          setAbsentPlayers(absentPlayers.filter(p => p.id !== player.id));
+                          setTeamB([...teamB, player]);
+                        }}
+                      >Return to Team B</button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="mt-8 flex justify-end">
               <button
                 className="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition disabled:opacity-50"
