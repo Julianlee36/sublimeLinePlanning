@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import type { Player as PlayerBase } from '../types/player';
-import type { Team } from '../types/team';
 import TallyGameEventRecorder from '../components/TallyGameEventRecorder';
 import type { TallyEvent } from '../components/TallyGameEventRecorder';
 
