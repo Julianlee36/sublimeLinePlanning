@@ -10,3 +10,12 @@ body {
 * {
   transition: box-shadow 0.2s, border-radius 0.2s;
 }
+
+@media (max-width: 640px) {
+  .bg-video {
+    object-fit: cover;
+    object-position: center 30%; /* adjust as needed for best crop */
+    transform: scale(1.25); /* zoom in for mobile vertical effect */
+    transition: transform 0.3s;
+  }
+}

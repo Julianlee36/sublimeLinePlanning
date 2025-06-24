@@ -7,7 +7,7 @@ const AuthPage = () => {
         <div className="relative min-h-screen flex items-center justify-center bg-background overflow-hidden">
             {/* Video Background */}
             <video
-                className="fixed inset-0 w-full h-full object-cover z-0"
+                className="bg-video fixed inset-0 w-full h-full object-cover z-0"
                 src="/flying discs.mov"
                 autoPlay
                 loop
