@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import type { Player as PlayerBase } from '../types/player';
 import TallyGameEventRecorder from '../components/TallyGameEventRecorder';
 import type { TallyEvent } from '../components/TallyGameEventRecorder';
+import CardStack from '../components/CardStack';
 
 const LOCAL_STORAGE_KEY = 'ultimate-stats-active-game';
 
@@ -367,26 +368,25 @@ const CreateTallyGame = () => {
               ) : errorLines ? (
                 <p className="text-red-500">{errorLines}</p>
               ) : (
-                <select
-                  className="w-full p-3 border border-gray-200 rounded-xl"
-                  value={selectedLineId || ''}
-                  onChange={e => {
-                    setSelectedLineId(e.target.value);
-                    const line = lines.find((l: Line) => l.id === e.target.value);
+                <CardStack
+                  cards={lines.map(line => ({
+                    id: line.id,
+                    title: line.name,
+                    description: line.description,
+                  }))}
+                  selectedId={selectedLineId}
+                  onSelect={id => {
+                    setSelectedLineId(id);
+                    const line = lines.find((l) => l.id === id);
                     if (line) {
-                      setTeamA(players.filter((p: Player) => line.player_ids.includes(p.id)));
-                      setTeamB(players.filter((p: Player) => !line.player_ids.includes(p.id) && !absentPlayers.some(a => a.id === p.id)));
+                      setTeamA(players.filter((p) => line.player_ids.includes(p.id)));
+                      setTeamB(players.filter((p) => !line.player_ids.includes(p.id) && !absentPlayers.some(a => a.id === p.id)));
                     } else {
                       setTeamA([]);
                       setTeamB([]);
                     }
                   }}
-                >
-                  <option value="">-- Select Line --</option>
-                  {lines.map((line: Line) => (
-                    <option key={line.id} value={line.id}>{line.name}</option>
-                  ))}
-                </select>
+                />
               )}
             </div>
             <div className="flex flex-col md:flex-row gap-8 mt-6">
