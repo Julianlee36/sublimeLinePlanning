@@ -206,8 +206,8 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black bg-opacity-40" onClick={closeModal}>
           <div
             ref={modalRef}
-            className="w-full max-w-md bg-white rounded-t-2xl p-6 pb-8 shadow-lg animate-fade-slide"
-            style={{ maxHeight: '60vh', overflowY: 'auto' }}
+            className="w-full max-w-md bg-white rounded-t-2xl p-6 pb-8 shadow-lg animate-fade-slide overflow-y-auto"
+            style={{ maxHeight: '80vh', overscrollBehavior: 'contain' }}
             onClick={e => e.stopPropagation()}
           >
             {/* Score Flow */}
