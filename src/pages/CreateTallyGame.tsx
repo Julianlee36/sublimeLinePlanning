@@ -407,7 +407,7 @@ const CreateTallyGame = () => {
                 <ul className="space-y-2">
                   {teamB.map((player: Player) => (
                     <li key={player.id} className="flex items-center justify-between bg-green-50 rounded-xl px-3 py-2 mb-2 w-full">
-                      <span className="flex-1 min-w-0 font-medium text-gray-900 truncate">{player.name}</span>
+                      <span className="flex-1 min-w-0 font-semibold text-gray-900 whitespace-normal break-words pl-2 text-base">{player.name}</span>
                       <div className="flex gap-2 ml-4">
                         <button
                           className="w-28 h-10 px-0 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition text-sm flex items-center justify-center"
