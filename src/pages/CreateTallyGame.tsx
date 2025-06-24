@@ -406,27 +406,29 @@ const CreateTallyGame = () => {
                 <h3 className="font-semibold mb-2 text-green-700">Team B (Rest of Team)</h3>
                 <ul className="space-y-2">
                   {teamB.map((player: Player) => (
-                    <li key={player.id} className="flex items-center justify-between bg-green-50 rounded-xl px-3 py-2 mb-2 w-full">
-                      <span className="flex-1 min-w-0 font-semibold text-gray-900 whitespace-normal break-words pl-2 text-base">{player.name}</span>
-                      <div className="flex gap-2 ml-4">
-                        <button
-                          className="w-28 h-10 px-0 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition text-sm flex items-center justify-center"
-                          onClick={() => {
-                            setTeamA([...teamA, player]);
-                            setTeamB(teamB.filter(p => p.id !== player.id));
-                          }}
-                        >
-                          Add to Line (Temp)
-                        </button>
-                        <button
-                          className="w-20 h-10 px-0 rounded-lg bg-gray-400 text-white font-semibold hover:bg-gray-500 transition text-sm flex items-center justify-center"
-                          onClick={() => {
-                            setAbsentPlayers([...absentPlayers, player]);
-                            setTeamB(teamB.filter(p => p.id !== player.id));
-                          }}
-                        >
-                          Absent
-                        </button>
+                    <li key={player.id} className="bg-green-50 rounded-xl px-3 py-2 mb-2 w-full">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full">
+                        <span className="font-semibold text-gray-900 whitespace-normal pl-2 text-base mb-2 md:mb-0 md:flex-1">{player.name}</span>
+                        <div className="flex gap-2 md:ml-4 w-full md:w-auto">
+                          <button
+                            className="w-full md:w-28 h-10 px-0 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition text-sm flex items-center justify-center"
+                            onClick={() => {
+                              setTeamA([...teamA, player]);
+                              setTeamB(teamB.filter(p => p.id !== player.id));
+                            }}
+                          >
+                            Add to Line (Temp)
+                          </button>
+                          <button
+                            className="w-full md:w-20 h-10 px-0 rounded-lg bg-gray-400 text-white font-semibold hover:bg-gray-500 transition text-sm flex items-center justify-center"
+                            onClick={() => {
+                              setAbsentPlayers([...absentPlayers, player]);
+                              setTeamB(teamB.filter(p => p.id !== player.id));
+                            }}
+                          >
+                            Absent
+                          </button>
+                        </div>
                       </div>
                     </li>
                   ))}
