@@ -39,7 +39,6 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
   const [turnoversB, setTurnoversB] = useState(0);
   // Event log
   const [eventLog, setEventLog] = useState<TallyEvent[]>([]);
-  const [undoStack, setUndoStack] = useState<TallyEvent[]>([]);
   // Modal state
   const [modal, setModal] = useState<{ type: EventType | null; step: number; data: any } | null>(null);
   // Autocomplete state
@@ -107,7 +106,6 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
         timestamp: Date.now(),
       };
       setEventLog(log => [...log, event]);
-      setUndoStack([]);
       if (team === 'A') setScoreA(s => s + 1);
       else setScoreB(s => s + 1);
       closeModal();
@@ -125,7 +123,6 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
       timestamp: Date.now(),
     };
     setEventLog(log => [...log, event]);
-    setUndoStack([]);
     if (team === 'A') setDefendsA(d => d + 1);
     else setDefendsB(d => d + 1);
     closeModal();
@@ -148,7 +145,6 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
         timestamp: Date.now(),
       };
       setEventLog(log => [...log, event]);
-      setUndoStack([]);
       if (team === 'A') setTurnoversA(t => t + 1);
       else setTurnoversB(t => t + 1);
       closeModal();
@@ -159,7 +155,6 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
   const handleUndo = () => {
     if (eventLog.length === 0) return;
     const last = eventLog[eventLog.length - 1];
-    setUndoStack(stack => [...stack, last]);
     setEventLog(log => log.slice(0, -1));
     // Update tallies
     if (last.type === 'score') {
