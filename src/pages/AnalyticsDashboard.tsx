@@ -106,7 +106,6 @@ const AnalyticsDashboard = () => {
 
   // Trend indicators (compare last 5 vs previous 5)
   const prev5Games = useMemo(() => games.slice(5, 10), [games]);
-  const prev5GameIds = useMemo(() => prev5Games.map((g) => g.id), [prev5Games]);
 
   // 2. Player Spotlight
   const playerStats = useMemo(() => {
