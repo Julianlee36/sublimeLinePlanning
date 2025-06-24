@@ -174,7 +174,7 @@ const TallyGameEventRecorder: React.FC<Props> = ({ presentPlayers, teamAName, te
     const filtered = presentPlayers.filter(p =>
       p.name.toLowerCase().includes(input.toLowerCase())
     );
-    return [{ id: '0', name: 'None', team: 'A' as 'A' }, ...filtered];
+    return filtered;
   };
 
   // --- Render ---
