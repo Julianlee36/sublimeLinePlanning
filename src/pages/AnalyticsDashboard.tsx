@@ -90,18 +90,6 @@ const AnalyticsDashboard = () => {
   const last5GameIds = useMemo(() => last5Games.map((g) => g.id), [last5Games]);
   const last5Events = useMemo(() => events.filter((e) => last5GameIds.includes(e.game_id)), [events, last5GameIds]);
 
-  // Win/Loss
-  const winLoss = useMemo(() => {
-    let wins = 0, losses = 0;
-    last5Games.forEach((g) => {
-      if (g.final_score_us != null && g.final_score_them != null) {
-        if (g.final_score_us > g.final_score_them) wins++;
-        else losses++;
-      }
-    });
-    return { wins, losses };
-  }, [last5Games]);
-
   // Team Completion % and Turnover Rate
   const completionStats = useMemo(() => {
     const completions = last5Events.filter((e) => e.result === 'completion').length;
@@ -120,15 +108,6 @@ const AnalyticsDashboard = () => {
   const prev5Games = useMemo(() => games.slice(5, 10), [games]);
   const prev5GameIds = useMemo(() => prev5Games.map((g) => g.id), [prev5Games]);
   const prev5Events = useMemo(() => events.filter((e) => prev5GameIds.includes(e.game_id)), [events, prev5GameIds]);
-  const prevCompletionStats = useMemo(() => {
-    const completions = prev5Events.filter((e) => e.result === 'completion').length;
-    const turnovers = prev5Events.filter((e) => e.result === 'turnover').length;
-    const totalThrows = completions + turnovers;
-    return {
-      completionPct: totalThrows > 0 ? Math.round((completions / totalThrows) * 100) : 0,
-      turnoverRate: totalThrows > 0 ? Math.round((turnovers / totalThrows) * 100) : 0,
-    };
-  }, [prev5Events]);
 
   // 2. Player Spotlight
   const playerStats = useMemo(() => {
