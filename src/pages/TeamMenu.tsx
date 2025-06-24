@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
+import { FaListAlt, FaPlayCircle, FaChartBar } from 'react-icons/fa';
 
 const TeamMenu = () => {
   const { teamId } = useParams<{ teamId: string }>();
@@ -11,23 +12,26 @@ const TeamMenu = () => {
           {/* Line Management */}
           <Link
             to={`/team/${teamId}/lines`}
-            className="block bg-blue-50 rounded-xl p-6 hover:bg-blue-100 transition"
+            className="flex items-center gap-3 bg-blue-50 rounded-2xl p-6 hover:bg-blue-100 transition shadow group cursor-pointer w-full text-lg font-bold justify-center transform hover:scale-105 focus:scale-105 active:scale-100 duration-150"
           >
-            <h2 className="text-2xl font-bold mb-2 text-blue-900">Line Management</h2>
+            <FaListAlt className="text-blue-700 text-2xl" />
+            <span className="text-blue-900">Line Management</span>
           </Link>
           {/* Play a Tally Game */}
           <Link
             to={`/create-tally-game?teamId=${teamId}`}
-            className="block bg-green-600 text-white font-bold py-3 px-8 rounded-xl shadow hover:bg-green-700 transition"
+            className="flex items-center gap-3 bg-green-600 text-white rounded-2xl p-6 hover:bg-green-700 transition shadow group cursor-pointer w-full text-lg font-bold justify-center transform hover:scale-105 focus:scale-105 active:scale-100 duration-150"
           >
-            Play a Tally Game
+            <FaPlayCircle className="text-white text-2xl" />
+            <span>Play a Tally Game</span>
           </Link>
           {/* Analyse Stats */}
           <Link
             to={`/team/${teamId}/analytics`}
-            className="block bg-yellow-400 text-gray-900 font-bold py-3 px-8 rounded-xl shadow hover:bg-yellow-500 transition"
+            className="flex items-center gap-3 bg-yellow-400 text-gray-900 rounded-2xl p-6 hover:bg-yellow-500 transition shadow group cursor-pointer w-full text-lg font-bold justify-center transform hover:scale-105 focus:scale-105 active:scale-100 duration-150"
           >
-            Analyse Stats
+            <FaChartBar className="text-gray-900 text-2xl" />
+            <span>Analyse Stats</span>
           </Link>
         </div>
       </div>
