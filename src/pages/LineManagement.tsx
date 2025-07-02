@@ -179,7 +179,7 @@ const LineManagement = () => {
             />
             <div>
               <label className="block mb-2 font-semibold">Select Players</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="max-h-[40vh] overflow-y-auto grid grid-cols-2 gap-2">
                 {players.map((player) => (
                   <label key={player.id} className="flex items-center space-x-2">
                     <input
@@ -231,7 +231,7 @@ const LineManagement = () => {
                       />
                       <div>
                         <label className="block mb-2 font-semibold">Select Players</label>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="max-h-[40vh] overflow-y-auto grid grid-cols-2 gap-2">
                           {players.map((player) => (
                             <label key={player.id} className="flex items-center space-x-2">
                               <input
